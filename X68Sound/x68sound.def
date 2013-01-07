@@ -1,0 +1,45 @@
+LIBRARY    X68Sound
+DESCRIPTION "X68k Sound Generator"
+EXPORTS
+	X68Sound_Start		@1
+	X68Sound_Samprate	@2
+	X68Sound_Reset		@3
+	X68Sound_Free		@4
+	X68Sound_BetwInt	@5
+
+	X68Sound_StartPcm	@6
+	X68Sound_GetPcm		@7
+
+	X68Sound_OpmPeek	@8
+	X68Sound_OpmReg		@9
+	X68Sound_OpmPoke	@10
+	X68Sound_OpmInt		@11
+	X68Sound_OpmWait	@12
+	X68Sound_OpmClock	@13
+
+	X68Sound_AdpcmPeek	@14
+	X68Sound_AdpcmPoke	@15
+	X68Sound_PpiPeek	@16
+	X68Sound_PpiPoke	@17
+	X68Sound_PpiCtrl	@18
+	X68Sound_DmaPeek	@19
+	X68Sound_DmaPoke	@20
+	X68Sound_DmaInt		@21
+	X68Sound_DmaErrInt	@22
+	X68Sound_MemReadFunc	@23
+
+	X68Sound_WaveFunc		@24
+
+	X68Sound_Pcm8_Out		@25
+	X68Sound_Pcm8_Aot		@26
+	X68Sound_Pcm8_Lot		@27
+	X68Sound_Pcm8_SetMode	@28
+	X68Sound_Pcm8_GetRest	@29
+	X68Sound_Pcm8_GetMode	@30
+	X68Sound_Pcm8_Abort		@31
+
+	X68Sound_TotalVolume	@32
+	
+
+	X68Sound_ErrorCode	@33
+	X68Sound_DebugValue	@34
