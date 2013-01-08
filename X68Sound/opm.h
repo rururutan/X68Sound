@@ -23,7 +23,7 @@ class Opm {
 	int	SLOTTBL[8*4];
 
 	unsigned char	CmndBuf[CMNDBUFSIZE+1][2];
-	volatile int	NumCmnd;
+	volatile long	NumCmnd;
 	int	CmndReadIdx,CmndWriteIdx;
 	int CmndRate;
 
@@ -578,10 +578,7 @@ inline void Opm::OpmPoke(unsigned char data) {
 		CmndBuf[CmndWriteIdx][1] = data;
 		++CmndWriteIdx; CmndWriteIdx&=CMNDBUFSIZE;
 		// ++NumCmnd;
-		__asm {
-			mov ebx,this
-			lock inc [ebx].NumCmnd
-		}
+		_InterlockedIncrement( &NumCmnd );
 	}
 
 	} else {
@@ -596,10 +593,7 @@ inline void Opm::OpmPoke(unsigned char data) {
 		CmndBuf[CmndWriteIdx][5] = data;
 		CmndWriteIdx+=4; CmndWriteIdx&=CMNDBUFSIZE;
 		// ++NumCmnd;
-		__asm {
-			mov ebx,this
-			lock inc [ebx].NumCmnd
-		}
+		_InterlockedIncrement( &NumCmnd );
 	}
 
 	}
@@ -627,13 +621,7 @@ inline void Opm::OpmPoke(unsigned char data) {
 	case 0x14:
 	// タイマー制御レジスタ
 		{
-			__asm {
-				lp1:
-					xor		eax,eax
-					mov		ecx,1
-					lock cmpxchg	TimerSemapho,ecx
-				jnz		lp1
-			}
+			while (_InterlockedCompareExchange(&TimerSemapho, 1, 0) == 1);
 
 			TimerReg = data & 0x0F;
 			StatReg &= 0xFF-((data>>4)&3);
@@ -664,10 +652,7 @@ inline void Opm::ExecuteCmnd() {
 				regno = CmndBuf[CmndReadIdx][0];
 				data = CmndBuf[CmndReadIdx][1];
 				++CmndReadIdx; CmndReadIdx&=CMNDBUFSIZE;
-				__asm {
-					mov ebx,this
-					lock dec [ebx].NumCmnd
-				}
+				_InterlockedDecrement( &NumCmnd );
 				ExecuteCmndCore( regno, data );
 			}
 		}
@@ -685,10 +670,7 @@ inline void Opm::ExecuteCmnd() {
 			regno = CmndBuf[CmndReadIdx][4];
 			data = CmndBuf[CmndReadIdx][5];
 			CmndReadIdx+=4; CmndReadIdx&=CMNDBUFSIZE;
-			__asm {
-				mov ebx,this
-				lock dec [ebx].NumCmnd
-			}
+			_InterlockedDecrement( &NumCmnd );
 			ExecuteCmndCore( regno, data );
 		}
 	}
@@ -1390,14 +1372,7 @@ inline int Opm::GetPcm(void *buf, int ndata) {
 }
 
 inline void Opm::timer() {
-	char	res;
-	__asm {
-		xor		eax,eax
-		mov		ecx,1
-		lock cmpxchg	TimerSemapho,ecx
-		setnz	res
-	}
-	if (res) {
+	if (_InterlockedCompareExchange(&TimerSemapho, 1, 0) == 1) {
 		return;
 	}
 
@@ -1443,7 +1418,7 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	}
 	Dousa_mode = 1;
 
-	if (rev < 0.1) rev = 0.1;	
+	if (rev < 0.1) rev = 0.1;
 	
 	UseOpmFlag = opmflag;
 	UseAdpcmFlag = adpcmflag;
@@ -1704,7 +1679,7 @@ inline int Opm::WaveAndTimerStart() {
 	}
 
 	timeBeginPeriod(TimerResolution);
-	TimerID=timeSetEvent(Betw_Time, TimerResolution, OpmTimeProc, NULL, TIME_PERIODIC);
+	TimerID=timeSetEvent(Betw_Time, TimerResolution, (LPTIMECALLBACK)OpmTimeProc, NULL, TIME_PERIODIC);
 	if (TimerID == NULL) {
 		Free();
 		ErrorCode = 4;
