@@ -271,27 +271,12 @@ const int PCM8VOLTBL[16] = {
 
 
 unsigned char *bswapl(unsigned char *adrs) {
-#ifdef _WIN64
-	unsigned long x = *(unsigned long*)adrs;
-	*(unsigned long*)adrs = ((x << 24) + (x & 0xff00 << 8) + (x & 0xff0000 >> 8) + (x >> 24));
+	*(unsigned long*)adrs = _byteswap_ulong(*(unsigned long*)adrs);
 	return adrs;
-#else
-	__asm {
-		mov	eax,adrs
-		bswap	eax
-	}
-#endif
 }
 
 unsigned short bswapw(unsigned short data) {
-#ifdef _WIN64
-	return (data >> 8 | data << 8);
-#else
-	__asm {
-		mov ax,data
-		ror ax,8
-	}
-#endif
+	return _byteswap_ushort(data);
 }
 
 int	CALLBACK MemReadDefault(unsigned char *adrs) {
