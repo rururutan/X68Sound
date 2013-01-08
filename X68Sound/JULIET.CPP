@@ -210,10 +210,13 @@ static void YM2151W(BYTE addr, BYTE data) {
 	while ( romeo.in8(romeo.addr + ROMEO_YM2151DATA)&0x80 ) Sleep(0);
 
 	romeo.out8(romeo.addr + ROMEO_YM2151ADDR, addr);
+	// dummy(?) wait by‚¤‚³
+	romeo.in8(romeo.addr + ROMEO_YM2151DATA);
 	romeo.out8(romeo.addr + ROMEO_YM2151DATA, data);
 }
 
 static void YM2151volset(BYTE ch, BYTE mask, char vol) {
+
 
 	BYTE	data;
 	BYTE	out;
