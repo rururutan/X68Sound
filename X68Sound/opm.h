@@ -132,6 +132,7 @@ public:
 	inline void OpmReg(unsigned char no);
 	inline void OpmPoke(unsigned char data);
 	inline void ExecuteCmnd();
+	inline void ExecuteCmndCore( unsigned char regno, unsigned char data);
 	inline void OpmInt(void (CALLBACK *proc)());
 
 	inline unsigned char AdpcmPeek();
@@ -374,6 +375,10 @@ inline void Opm::Reset() {
 
 	MemRead = MemReadDefault;
 
+	if ( UseOpmFlag == 2 ) {
+		juliet_YM2151Reset();
+		juliet_YM2151Mute(0);
+	}
 
 //	UseOpmFlag = 0;
 //	UseAdpcmFlag = 0;
@@ -564,6 +569,8 @@ inline void Opm::OpmReg(unsigned char no) {
 	OpmRegNo = no;
 }
 inline void Opm::OpmPoke(unsigned char data) {
+	if ( UseOpmFlag < 2 ) {
+
 	if (NumCmnd < CMNDBUFSIZE) {
 		CmndBuf[CmndWriteIdx][0] = OpmRegNo;
 		CmndBuf[CmndWriteIdx][1] = data;
@@ -573,6 +580,26 @@ inline void Opm::OpmPoke(unsigned char data) {
 			mov ebx,this
 			lock inc [ebx].NumCmnd
 		}
+	}
+
+	} else {
+
+	if (NumCmnd < ((CMNDBUFSIZE+1)/4)-1) {
+		DWORD time = timeGetTime();
+		CmndBuf[CmndWriteIdx][0] = (BYTE)(time>>24);
+		CmndBuf[CmndWriteIdx][1] = (BYTE)(time>>16);
+		CmndBuf[CmndWriteIdx][2] = (BYTE)(time>>8);
+		CmndBuf[CmndWriteIdx][3] = (BYTE)(time>>0);
+		CmndBuf[CmndWriteIdx][4] = OpmRegNo;
+		CmndBuf[CmndWriteIdx][5] = data;
+		CmndWriteIdx+=4; CmndWriteIdx&=CMNDBUFSIZE;
+		// ++NumCmnd;
+		__asm {
+			mov ebx,this
+			lock inc [ebx].NumCmnd
+		}
+	}
+
 	}
 
 	switch (OpmRegNo) {
@@ -622,25 +649,51 @@ inline void Opm::OpmPoke(unsigned char data) {
 		break;
 	}
 }
+
 inline void Opm::ExecuteCmnd() {
 
 	static int	rate=0;
-	rate -= CmndRate;
-	while (rate < 0) {
-	rate += 4096;
-	
-	
-	if (NumCmnd != 0) {
 
-	unsigned char	regno,data;
-	regno = CmndBuf[CmndReadIdx][0];
-	data = CmndBuf[CmndReadIdx][1];
-	++CmndReadIdx; CmndReadIdx&=CMNDBUFSIZE;
-	__asm {
-		mov ebx,this
-		lock dec [ebx].NumCmnd
+	if ( UseOpmFlag < 2 ) {
+		rate -= CmndRate;
+		while (rate < 0) {
+			rate += 4096;
+			if (NumCmnd != 0) {
+				unsigned char	regno,data;
+				regno = CmndBuf[CmndReadIdx][0];
+				data = CmndBuf[CmndReadIdx][1];
+				++CmndReadIdx; CmndReadIdx&=CMNDBUFSIZE;
+				__asm {
+					mov ebx,this
+					lock dec [ebx].NumCmnd
+				}
+				ExecuteCmndCore( regno, data );
+			}
+		}
+	} else {
+		while ( NumCmnd ) {
+			DWORD t1, t2;
+			unsigned char	regno,data;
+			t1 = timeGetTime();
+			t2 = (CmndBuf[CmndReadIdx][0]*0x1000000)+
+			     (CmndBuf[CmndReadIdx][1]*0x10000)+
+			     (CmndBuf[CmndReadIdx][2]*0x100)+
+			     (CmndBuf[CmndReadIdx][3]*0x1);
+			t1 -= t2;
+			if ( t1 < _late ) break;
+			regno = CmndBuf[CmndReadIdx][4];
+			data = CmndBuf[CmndReadIdx][5];
+			CmndReadIdx+=4; CmndReadIdx&=CMNDBUFSIZE;
+			__asm {
+				mov ebx,this
+				lock dec [ebx].NumCmnd
+			}
+			ExecuteCmndCore( regno, data );
+		}
 	}
+}
 
+inline void Opm::ExecuteCmndCore( unsigned char regno, unsigned char data ) {
 	switch (regno) {
 	case 0x01:
 	// LFO RESET
@@ -806,8 +859,11 @@ inline void Opm::ExecuteCmnd() {
 	
 	}
 
+#if 1
+	if ( UseOpmFlag == 2 ) {
+		juliet_YM2151W( (BYTE)regno, (BYTE)data );
 	}
-	}
+#endif
 
 }
 
@@ -844,6 +900,7 @@ inline void Opm::pcmset62(int ndata) {
 					}
 				}
 
+				if ( UseOpmFlag == 1 ) {
 					{
 						lfo.Update();
 
@@ -920,6 +977,7 @@ inline void Opm::pcmset62(int ndata) {
 					OutInpOpm[1] = InpOpm[1] >> 5; // 8*-2^12 Å` 8*+2^12
 //					OutInpOpm[0] = (InpOpm[0]*521) >> (5+9); // 8*-2^12 Å` 8*+2^12
 //					OutInpOpm[1] = (InpOpm[1]*521) >> (5+9); // OPMÇ∆ADPCMÇÃâπó ÉoÉâÉìÉXí≤êÆ
+				}  // UseOpmFlags == 1
 			}	// UseOpmFlag
 
 			if (UseAdpcmFlag) {
@@ -1007,21 +1065,22 @@ inline void Opm::pcmset62(int ndata) {
 
 
 			// âπäÑÇÍñhé~
-			#define	LIMITS	((1<<15)-1)
-			if ((unsigned int)(OutInpOpm[0]+LIMITS) > (unsigned int)(LIMITS*2)) {
-				if ((int)(OutInpOpm[0]+LIMITS) >= (int)(LIMITS*2)) {
-					OutInpOpm[0] = LIMITS;
+			#define	PCM_LIMITS	((1<<15)-1)
+			if ((unsigned int)(OutInpOpm[0]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
+				if ((int)(OutInpOpm[0]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
+					OutInpOpm[0] = PCM_LIMITS;
 				} else {
-					OutInpOpm[0] = -LIMITS;
+					OutInpOpm[0] = -PCM_LIMITS;
 				}
 			}
-			if ((unsigned int)(OutInpOpm[1]+LIMITS) > (unsigned int)(LIMITS*2)) {
-				if ((int)(OutInpOpm[1]+LIMITS) >= (int)(LIMITS*2)) {
-					OutInpOpm[1] = LIMITS;
+			if ((unsigned int)(OutInpOpm[1]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
+				if ((int)(OutInpOpm[1]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
+					OutInpOpm[1] = PCM_LIMITS;
 				} else {
-					OutInpOpm[1] = -LIMITS;
+					OutInpOpm[1] = -PCM_LIMITS;
 				}
 			}
+			#undef PCM_LIMITS
 
 			--InpOpm_idx;
 			if (InpOpm_idx < 0) InpOpm_idx=OPMLPF_COL-1;
@@ -1109,6 +1168,7 @@ inline void Opm::pcmset22(int ndata) {
 				}
 			}
 
+			if ( UseOpmFlag == 1 ) {
 					{
 						lfo.Update();
 
@@ -1187,7 +1247,8 @@ inline void Opm::pcmset22(int ndata) {
 
 			Out[0] -= OutOpm[0]>>(5);	// -4096 Å` +4096
 			Out[1] -= OutOpm[1]>>(5);
-		}
+		}  // UseOpmFlags == 1
+		}  // UseOpmFlags
 
 		if (UseAdpcmFlag) {
 			static int rate=0,rate2=0;
@@ -1227,21 +1288,22 @@ inline void Opm::pcmset22(int ndata) {
 //					OutInpAdpcm[1] = (OutInpAdpcm[1]*TotalVolume) >> 8;
 
 					// âπäÑÇÍñhé~
-					#define	LIMITS	((1<<19)-1)
-					if ((unsigned int)(OutInpAdpcm[0]+LIMITS) > (unsigned int)(LIMITS*2)) {
-						if ((int)(OutInpAdpcm[0]+LIMITS) >= (int)(LIMITS*2)) {
-							OutInpAdpcm[0] = LIMITS;
+					#define	PCM_LIMITS	((1<<19)-1)
+					if ((unsigned int)(OutInpAdpcm[0]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
+						if ((int)(OutInpAdpcm[0]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
+							OutInpAdpcm[0] = PCM_LIMITS;
 						} else {
-							OutInpAdpcm[0] = -LIMITS;
+							OutInpAdpcm[0] = -PCM_LIMITS;
 						}
 					}
-					if ((unsigned int)(OutInpAdpcm[1]+LIMITS) > (unsigned int)(LIMITS*2)) {
-						if ((int)(OutInpAdpcm[1]+LIMITS) >= (int)(LIMITS*2)) {
-							OutInpAdpcm[1] = LIMITS;
+					if ((unsigned int)(OutInpAdpcm[1]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
+						if ((int)(OutInpAdpcm[1]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
+							OutInpAdpcm[1] = PCM_LIMITS;
 						} else {
-							OutInpAdpcm[1] = -LIMITS;
+							OutInpAdpcm[1] = -PCM_LIMITS;
 						}
 					}
+					#undef PCM_LIMITS
 
 					OutInpAdpcm[0] *= 40;
 					OutInpAdpcm[1] *= 40;
@@ -1400,6 +1462,12 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	} else {
 		Samprate = 22050;
 		WaveOutSamp = 22050;
+	}
+
+	if ( UseOpmFlag == 2 ) {
+		juliet_load();
+		juliet_prepare();
+		juliet_YM2151Mute(0);
 	}
 
 	MakeTable();
@@ -1638,6 +1706,12 @@ inline int Opm::WaveAndTimerStart() {
 
 
 inline void Opm::Free() {
+
+	if ( UseOpmFlag == 2 ) {
+		juliet_YM2151Reset();
+		juliet_unload();
+	}
+
 	if (TimerID != NULL) {	// É}ÉãÉ`ÉÅÉfÉBÉAÉ^ÉCÉ}Å[í‚é~
 		timeKillEvent(TimerID);
 		TimerID = NULL;

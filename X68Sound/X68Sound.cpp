@@ -1,12 +1,13 @@
 #include	"x68sound.h"
 
+#include	"JULIET.H"
+
 #include	"global.h"
 #include	"op.h"
 #include	"lfo.h"
 #include	"adpcm.h"
 #include	"pcm8.h"
 #include	"opm.h"
-
 
 
 
