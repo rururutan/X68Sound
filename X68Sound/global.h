@@ -5,6 +5,7 @@
 #include	<windowsx.h>
 #include	<conio.h>
 #include	<ctype.h>
+#include	<intrin.h>
 
 #define	NODEBUG
 
@@ -48,7 +49,7 @@ int	STEPTBL[11*12*64];
 #define	ALPHAZERO	(SIZEALPHATBL*3)
 unsigned short	ALPHATBL[ALPHAZERO+SIZEALPHATBL+1];
 short	SINTBL[SIZESINTBL];
-int STEPTBL_O2[12*64] = {
+const int STEPTBL_O2[12*64] = {
 	1299,1300,1301,1302,1303,1304,1305,1306,
 	1308,1309,1310,1311,1313,1314,1315,1316,
 	1318,1319,1320,1321,1322,1323,1324,1325,
@@ -149,7 +150,7 @@ int STEPTBL_O2[12*64] = {
 int	D1LTBL[16];
 
 int	DT1TBL[128+4];
-int	DT1TBL_org[128+4] = {
+const int DT1TBL_org[128+4] = {
 	0, 0, 1, 2, 
 	0, 0, 1, 2, 
 	0, 0, 1, 2, 
@@ -189,7 +190,7 @@ typedef struct {
 	int	add;
 }	XR_ELE;
 
-XR_ELE XRTBL[64+32] = {
+const XR_ELE XRTBL[64+32] = {
 	{4095,8},
 	{2047,5},{2047,6},{2047,7},{2047,8},
 	{1023,5},{1023,6},{1023,7},{1023,8},
@@ -214,7 +215,7 @@ XR_ELE XRTBL[64+32] = {
 };
 
 
-int DT2TBL[4] = { 0, 384, 500, 608 };
+const int DT2TBL[4] = { 0, 384, 500, 608 };
 
 unsigned short	NOISEALPHATBL[ALPHAZERO+SIZEALPHATBL+1];
 
@@ -236,33 +237,33 @@ unsigned short	NOISEALPHATBL[ALPHAZERO+SIZEALPHATBL+1];
 
 
 
-int dltLTBL[48+1]= {
+const int dltLTBL[48+1]= {
 	16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,
 	73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,
 	337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,
 };
 /*
-int dltLTBL[48+7+1]= {
+const int dltLTBL[48+7+1]= {
 	16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,
 	73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,
 	337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,
 	1707,1878,2066,2272,2500,2750,3025
 };
 */
-int DCT[16]= {
+const int DCT[16]= {
 	-1,-1,-1,-1,2,4,6,8,
 	-1,-1,-1,-1,2,4,6,8,
 };
 
 
-int ADPCMRATETBL[2][4] = {
+const int ADPCMRATETBL[2][4] = {
 	2, 3, 4, 4,
 	0, 1, 2, 2,
 };
-int	ADPCMRATEADDTBL[8] = {
+const int ADPCMRATEADDTBL[8] = {
 	46875, 62500, 93750, 125000, 15625*12, 15625*12, 15625*12, 0,
 };
-int PCM8VOLTBL[16] = {
+const int PCM8VOLTBL[16] = {
 	2,3,4,5,6,8,10,12,16,20,24,32,40,48,64,80,
 };
 
@@ -270,17 +271,27 @@ int PCM8VOLTBL[16] = {
 
 
 unsigned char *bswapl(unsigned char *adrs) {
+#ifdef _WIN64
+	unsigned long x = *(unsigned long*)adrs;
+	*(unsigned long*)adrs = ((x << 24) + (x & 0xff00 << 8) + (x & 0xff0000 >> 8) + (x >> 24));
+	return adrs;
+#else
 	__asm {
 		mov	eax,adrs
 		bswap	eax
 	}
+#endif
 }
 
 unsigned short bswapw(unsigned short data) {
+#ifdef _WIN64
+	return (data >> 8 | data << 8);
+#else
 	__asm {
 		mov ax,data
 		ror ax,8
 	}
+#endif
 }
 
 int	CALLBACK MemReadDefault(unsigned char *adrs) {
@@ -298,8 +309,7 @@ unsigned int irnd(void) {
 
 int	TotalVolume;	// ‰¹—Ê x/256
 
-volatile static int Semapho=0;
-volatile static int TimerSemapho=0;
+volatile static long TimerSemapho=0;
 
 #define	OPMLPF_COL	64
 
@@ -644,6 +654,14 @@ void OpmFir_MMX(short *p, short *buf0, short *buf1, int *result) {
 	}
 }
 */
+
+void	(*OpmFir)(short *, short *, short *, int *) = OpmFir_Normal;
+
+#ifdef _WIN64
+void DetectMMX() {
+	OpmFir = OpmFir_Normal;
+}
+#else
 void OpmFir_MMX(short *p, short *buf0, short *buf1, int *result) {
 	__asm {
 		mov		ebx,p
@@ -797,9 +815,6 @@ void OpmFir_MMX(short *p, short *buf0, short *buf1, int *result) {
 	}
 }
 
-
-void	(*OpmFir)(short *, short *, short *, int *) = OpmFir_Normal;
-
 void DetectMMX() {
 	int flag;
 	__asm {
@@ -814,4 +829,4 @@ void DetectMMX() {
 		OpmFir = OpmFir_Normal;
 	}
 }
-
+#endif

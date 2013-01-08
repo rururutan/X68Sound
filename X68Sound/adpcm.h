@@ -49,7 +49,7 @@ inline void Adpcm::SetAdpcmRate(int rate) {
 	AdpcmRate = ADPCMRATEADDTBL[rate & 7];
 }
 
-unsigned char DmaRegInit[0x40] = {
+const unsigned char DmaRegInit[0x40] = {
 /*+00*/	0x00,0x00,	// CSR/CER
 /*+02*/	0xFF,0xFF,
 /*+04*/	0x80,0x32,	// DCR/OCR
