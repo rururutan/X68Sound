@@ -1459,9 +1459,12 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 		WaveOutSamp = 48000;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else {
+	} else if (samprate == 22050) {
 		Samprate = 22050;
 		WaveOutSamp = 22050;
+	} else {
+		Samprate = 62500;
+		WaveOutSamp = samprate;
 	}
 
 	if ( UseOpmFlag == 2 ) {
@@ -1499,9 +1502,12 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 		WaveOutSamp = 48000;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else {
+	} else if (samprate == 22050) {
 		Samprate = 22050;
 		WaveOutSamp = 22050;
+	} else {
+		Samprate = 62500;
+		WaveOutSamp = samprate;
 	}
 
 	MakeTable();
@@ -1530,9 +1536,12 @@ inline int Opm::SetSamprate(int samprate) {
 		WaveOutSamp = 48000;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else {
+	} else if (samprate == 22050) {
 		Samprate = 22050;
 		WaveOutSamp = 22050;
+	} else {
+		Samprate = 62500;
+		WaveOutSamp = samprate;
 	}
 
 	MakeTable();
