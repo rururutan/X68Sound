@@ -238,9 +238,9 @@ extern "C" int X68Sound_TotalVolume(int v) {
 	return opm.SetTotalVolume(v);
 }
 
-
-
-
+extern "C" void X68Sound_SetMask(int v) {
+	return opm.SetMask(v);
+}
 
 
 

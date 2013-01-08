@@ -43,3 +43,5 @@ EXPORTS
 
 	X68Sound_ErrorCode	@33
 	X68Sound_DebugValue	@34
+
+	X68Sound_SetMask	@35

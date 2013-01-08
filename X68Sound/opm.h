@@ -94,6 +94,7 @@ private:
 
 	int Dousa_mode;		// 0:非動作 1:X68Sound_Start中  2:X68Sound_PcmStart中
 
+	int OpmChMask;		// Channel Mask
 
 //public:
 	Adpcm	adpcm;
@@ -162,6 +163,7 @@ public:
 	inline void PushRegs();
 	inline void PopRegs();
 
+	inline void SetMask(int v);
 };
 
 
@@ -462,7 +464,7 @@ Opm::Opm(void) {
 	TimerID = NULL;
 
 	Dousa_mode = 0;
-
+	OpmChMask = 0;
 }
 
 inline void Opm::MakeTable() {
@@ -929,22 +931,22 @@ inline void Opm::pcmset62(int ndata) {
 					}
 
 					// OpmHpfInp[] に OPM の出力PCMをステレオ加算
-					OpmHpfInp[0] =    (OpOut[0] & pan[0][0])
-									+ (OpOut[1] & pan[0][1])
-									+ (OpOut[2] & pan[0][2])
-									+ (OpOut[3] & pan[0][3])
-									+ (OpOut[4] & pan[0][4])
-									+ (OpOut[5] & pan[0][5])
-									+ (OpOut[6] & pan[0][6])
-									+ (OpOut[7] & pan[0][7]);
-					OpmHpfInp[1] =    (OpOut[0] & pan[1][0])
-									+ (OpOut[1] & pan[1][1])
-									+ (OpOut[2] & pan[1][2])
-									+ (OpOut[3] & pan[1][3])
-									+ (OpOut[4] & pan[1][4])
-									+ (OpOut[5] & pan[1][5])
-									+ (OpOut[6] & pan[1][6])
-									+ (OpOut[7] & pan[1][7]);
+					OpmHpfInp[0] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[0][0]))
+									+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[0][1]))
+									+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[0][2]))
+									+ ((OpmChMask & 0x08) ? 0 : (OpOut[3] & pan[0][3]))
+									+ ((OpmChMask & 0x10) ? 0 : (OpOut[4] & pan[0][4]))
+									+ ((OpmChMask & 0x20) ? 0 : (OpOut[5] & pan[0][5]))
+									+ ((OpmChMask & 0x40) ? 0 : (OpOut[6] & pan[0][6]))
+									+ ((OpmChMask & 0x80) ? 0 : (OpOut[7] & pan[0][7]));
+					OpmHpfInp[1] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[1][0]))
+									+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[1][1]))
+									+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[1][2]))
+									+ ((OpmChMask & 0x08) ? 0 : (OpOut[3] & pan[1][3]))
+									+ ((OpmChMask & 0x10) ? 0 : (OpOut[4] & pan[1][4]))
+									+ ((OpmChMask & 0x20) ? 0 : (OpOut[5] & pan[1][5]))
+									+ ((OpmChMask & 0x40) ? 0 : (OpOut[6] & pan[1][6]))
+									+ ((OpmChMask & 0x80) ? 0 : (OpOut[7] & pan[1][7]));
 
 					OpmHpfInp[0] = (OpmHpfInp[0]&(int)0xFFFFFC00) << 4;
 					OpmHpfInp[1] = (OpmHpfInp[1]&(int)0xFFFFFC00) << 4;
@@ -986,6 +988,7 @@ inline void Opm::pcmset62(int ndata) {
 				{
 					int	o;
 					o = adpcm.GetPcm62();
+					if (!(OpmChMask & 0x100))
 					if (o != 0x80000000) {
 							OutInpAdpcm[0] += ((((int)(PpiReg)>>1)&1)-1) & o;
 							OutInpAdpcm[1] += (((int)(PpiReg)&1)-1) & o;
@@ -1000,6 +1003,7 @@ inline void Opm::pcmset62(int ndata) {
 						pan = pcm8[ch].GetMode();
 						int	o;
 						o = pcm8[ch].GetPcm62();
+						if (!(OpmChMask & (0x100 << ch)))
 						if (o != 0x80000000) {
 								OutInpAdpcm[0] += (-(pan&1)) & o;
 								OutInpAdpcm[1] += (-((pan>>1)&1)) & o;
@@ -2028,4 +2032,8 @@ inline void Opm::MemReadFunc(int (CALLBACK *func)(unsigned char *)) {
 	} else {
 		MemRead = func;
 	}
+}
+
+inline void Opm::SetMask(int v) {
+	OpmChMask = v;
 }
