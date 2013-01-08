@@ -43,7 +43,7 @@ private:
 //	int 
 //	int	Lfrq;		// LFO周波数設定値 LFRQ
 //	int	LfoWaveForm;	// LFO wave form
-//	inline void	CulcLfoStep();
+//	inline void	CalcLfoStep();
 	inline void SetConnection(int ch, int alg);
 	volatile int	OpOut[8];
 	int	OpOutDummy;
@@ -123,7 +123,7 @@ public:
 	inline int SetOpmClock(int clock);
 	inline int WaveAndTimerStart();
 	inline int SetOpmWait(int wait);
-	inline void CulcCmndRate();
+	inline void CalcCmndRate();
 	inline void Reset();
 	inline void ResetSamprate();
 	inline void Free();
@@ -248,11 +248,11 @@ inline void Opm::SetConnection(int ch, int alg) {
 inline int Opm::SetOpmWait(int wait) {
 	if (wait != -1) {
 		OpmWait = wait;
-		CulcCmndRate();
+		CalcCmndRate();
 	}
 	return OpmWait;
 }
-inline void Opm::CulcCmndRate() {
+inline void Opm::CalcCmndRate() {
 	if (OpmWait != 0) {
 		CmndRate = (4096*160/OpmWait);
 		if (CmndRate == 0) {
@@ -268,7 +268,7 @@ inline void Opm::Reset() {
 	NumCmnd = 0;
 	CmndReadIdx = CmndWriteIdx = 0;
 
-	CulcCmndRate();
+	CalcCmndRate();
 	
 	// 高音フィルター用バッファをクリア
 	InpInpOpm[0] = InpInpOpm[1] =
@@ -279,7 +279,7 @@ inline void Opm::Reset() {
 	InpOpm_prev2[0] = InpOpm_prev2[1] =
 	OutOpm[0] = OutOpm[1] = 0;
 	{
-		int i,j;
+		int i;
 		for (i=0; i<OPMLPF_COL*2; ++i) {
 			InpOpmBuf0[i]=InpOpmBuf1[i]=0;
 		}
@@ -386,7 +386,7 @@ inline void Opm::Reset() {
 //	UseAdpcmFlag = 0;
 }
 inline void Opm::ResetSamprate() {
-	CulcCmndRate();
+	CalcCmndRate();
 
 	// 高音フィルター用バッファをクリア
 	InpInpOpm[0] = InpInpOpm[1] =
@@ -397,7 +397,7 @@ inline void Opm::ResetSamprate() {
 	InpOpm_prev2[0] = InpOpm_prev2[1] =
 	OutOpm[0] = OutOpm[1] = 0;
 	{
-		int i,j;
+		int i;
 		for (i=0; i<OPMLPF_COL*2; ++i) {
 			InpOpmBuf0[i]=InpOpmBuf1[i]=0;
 		}
@@ -654,9 +654,8 @@ inline void Opm::OpmPoke(unsigned char data) {
 
 inline void Opm::ExecuteCmnd() {
 
-	static int	rate=0;
-
 	if ( UseOpmFlag < 2 ) {
+		static int	rate=0;
 		rate -= CmndRate;
 		while (rate < 0) {
 			rate += 4096;
@@ -1153,7 +1152,7 @@ inline void Opm::pcmset22(int ndata) {
 		Out[0] = Out[1] = 0;
 		
 		if (UseOpmFlag) {
-			static int rate=0,rate2=0;
+			static int rate=0;
 
 //			rate-=62500;
 			rate-=OpmRate;
@@ -1255,7 +1254,7 @@ inline void Opm::pcmset22(int ndata) {
 		}  // UseOpmFlags
 
 		if (UseAdpcmFlag) {
-			static int rate=0,rate2=0;
+			static int rate2=0;
 
 				rate2 -= 15625;
 				if (rate2 < 0) {

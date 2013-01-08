@@ -637,7 +637,7 @@ inline void Op::Output32_22(int lfopitch, int lfolevel) {
 			Alpha = (int)(NOISEALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 			LfoLevel = lfolevelame;
 		}
-		int o = (Alpha)
+		o = (Alpha)
 			* NoiseValue * MAXSINVAL;
 	}
 

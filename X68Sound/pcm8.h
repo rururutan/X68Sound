@@ -284,8 +284,8 @@ inline int Pcm8::GetPcm() {
 			}
 			pcm16_2pcm((int)(char)data);	// InpPcm に値が入る
 		} else {
-			int	N10Data;	// (N1Data << 4) | N0Data
 			if (N1DataFlag == 0) {		// 次のADPCMデータが内部にない場合
+				int	N10Data;	// (N1Data << 4) | N0Data
 				N10Data = DmaGetByte();	// DMA転送(1バイト)
 				if (N10Data == 0x80000000) {
 					RateCounter = 0;
@@ -340,8 +340,8 @@ inline int Pcm8::GetPcm62() {
 			}
 			pcm16_2pcm((int)(char)data);	// InpPcm に値が入る
 		} else {
-			int	N10Data;	// (N1Data << 4) | N0Data
 			if (N1DataFlag == 0) {		// 次のADPCMデータが内部にない場合
+				int	N10Data;	// (N1Data << 4) | N0Data
 				N10Data = DmaGetByte();	// DMA転送(1バイト)
 				if (N10Data == 0x80000000) {
 					RateCounter = 0;
