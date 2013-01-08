@@ -1,5 +1,4 @@
 LIBRARY    X68Sound
-DESCRIPTION "X68k Sound Generator"
 EXPORTS
 	X68Sound_Start		@1
 	X68Sound_Samprate	@2

@@ -22,6 +22,7 @@ BEGIN
             VALUE "FileVersion", "2002.6.15.1\0"
             VALUE "LegalCopyright", "m_puusan\0"
             VALUE "OriginalFilename", "X68Sound.dll\0"
+            VALUE "ProductName", "X68k Sound Generator\0"
         END
     END
     BLOCK "VarFileInfo"
