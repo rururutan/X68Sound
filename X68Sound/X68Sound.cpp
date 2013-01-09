@@ -1,6 +1,8 @@
 #include	"x68sound.h"
 
+#ifdef ROMEO
 #include	"JULIET.H"
+#endif
 
 #include	"global.h"
 #include	"op.h"

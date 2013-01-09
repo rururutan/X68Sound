@@ -377,10 +377,12 @@ inline void Opm::Reset() {
 
 	MemRead = MemReadDefault;
 
+#ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
 		juliet_YM2151Reset();
 		juliet_YM2151Mute(0);
 	}
+#endif
 
 //	UseOpmFlag = 0;
 //	UseAdpcmFlag = 0;
@@ -842,7 +844,7 @@ inline void Opm::ExecuteCmndCore( unsigned char regno, unsigned char data ) {
 	
 	}
 
-#if 1
+#ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
 		juliet_YM2151W( (BYTE)regno, (BYTE)data );
 	}
@@ -1445,11 +1447,13 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 		WaveOutSamp = samprate;
 	}
 
+#ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
 		juliet_load();
 		juliet_prepare();
 		juliet_YM2151Mute(0);
 	}
+#endif
 
 	MakeTable();
 	Reset();
@@ -1694,10 +1698,12 @@ inline int Opm::WaveAndTimerStart() {
 
 inline void Opm::Free() {
 
+#ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
 		juliet_YM2151Reset();
 		juliet_unload();
 	}
+#endif
 
 	if (TimerID != NULL) {	// マルチメディアタイマー停止
 		timeKillEvent(TimerID);
