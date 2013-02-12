@@ -44,6 +44,7 @@ extern "C" int X68Sound_TotalVolume(int v);
 extern "C" int X68Sound_ErrorCode();
 extern "C" int X68Sound_DebugValue();
 
+extern "C" void X68Sound_SetMask(int mask);
 
 
 #define	X68SNDERR_PCMOUT	(-1)
