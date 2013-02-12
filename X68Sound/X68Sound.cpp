@@ -3,6 +3,9 @@
 #ifdef ROMEO
 #include	"JULIET.H"
 #endif
+#ifdef C86CTL
+#include	"c86ctl.h"
+#endif
 
 #include	"global.h"
 #include	"op.h"

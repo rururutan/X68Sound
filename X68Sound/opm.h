@@ -1,10 +1,14 @@
 #define	CMNDBUFSIZE	65535
-#define	FlagBufSize	7
 
 //#define	RES	(20)
 //#define	NDATA	(44100/5)
 #define	PCMBUFSIZE	65536
 //#define	DELAY	(1000/5)
+
+#ifdef C86CTL
+// c86ctl 用定義
+typedef HRESULT (WINAPI *C86CtlCreateInstance)( REFIID, LPVOID* );
+#endif
 
 class Opm {
 	char *Author;
@@ -103,6 +107,12 @@ private:
 
 //	int	TotalVolume;	// 音量 x/256
 
+#ifdef C86CTL
+private: // c86ctl 用
+	HMODULE hC86DLL;
+	c86ctl::IRealChipBase *pChipBase;
+	c86ctl::IRealChip2 *pChipOPM;
+#endif
 
 public:
 	Opm(void);
@@ -377,6 +387,11 @@ inline void Opm::Reset() {
 
 	MemRead = MemReadDefault;
 
+#ifdef C86CTL
+	if( pChipOPM )
+		pChipOPM->reset();
+#endif
+
 #ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
 		juliet_YM2151Reset();
@@ -467,6 +482,37 @@ Opm::Opm(void) {
 
 	Dousa_mode = 0;
 	OpmChMask = 0;
+
+#ifdef C86CTL
+	// C86CTL のロード
+	pChipBase = NULL;
+	pChipOPM = NULL;
+	
+	hC86DLL = ::LoadLibrary( "c86ctl.dll" );
+	if( hC86DLL ){
+		C86CtlCreateInstance pCI = (C86CtlCreateInstance)::GetProcAddress( hC86DLL, "CreateInstance" );
+		if( pCI ) (*pCI)( c86ctl::IID_IRealChipBase, (void**)&pChipBase );
+	}
+	// C86CTLの初期化 & OPMモジュールの探索
+	if( pChipBase ){
+		pChipBase->initialize();
+		int num  = pChipBase->getNumberOfChip();
+		for( int i=0; i<num; i++ ){
+			c86ctl::IGimic2 *pGimic = 0;
+			pChipBase->getChipInterface( i, c86ctl::IID_IGimic2, (void**)&pGimic );
+			if( pGimic ){
+				enum c86ctl::ChipType chipType;
+				pGimic->getModuleType( &chipType );
+				if( chipType == c86ctl::CHIP_OPM ){
+					pGimic->QueryInterface( c86ctl::IID_IRealChip2, (void**)&pChipOPM );
+					pGimic->Release();
+					break;
+				}
+				pGimic->Release();
+			}
+		}
+	}
+#endif
 }
 
 inline void Opm::MakeTable() {
@@ -575,6 +621,11 @@ inline void Opm::OpmReg(unsigned char no) {
 inline void Opm::OpmPoke(unsigned char data) {
 	if ( UseOpmFlag < 2 ) {
 
+#ifdef C86CTL
+	if( pChipOPM )
+		pChipOPM->out(OpmRegNo, data);
+	else
+#endif
 	if (NumCmnd < CMNDBUFSIZE) {
 		CmndBuf[CmndWriteIdx][0] = OpmRegNo;
 		CmndBuf[CmndWriteIdx][1] = data;
@@ -1697,6 +1748,16 @@ inline int Opm::WaveAndTimerStart() {
 
 
 inline void Opm::Free() {
+#ifdef C86CTL
+	if( pChipBase ){
+		if( pChipOPM ){
+			pChipOPM->reset();
+			pChipOPM = 0;
+		}
+		pChipBase->deinitialize();
+		pChipBase = 0;
+	}
+#endif
 
 #ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
