@@ -76,7 +76,6 @@ inline void Pcm8::Init() {
 	DmaBar = NULL;
 	DmaBtc = 0;
 	DmaOcr = 0;
-	
 }
 inline void Pcm8::InitSamprate() {
 	RateCounter = 0;
@@ -388,6 +387,7 @@ inline int	Pcm8::Out(void *adrs, int mode, int len) {
 		DmaMtc = len;
 		Reset();
 		AdpcmReg = 0x47;	// ADPCM 動作開始
+		DmaOcr = 0;			// チェイン動作なし
 	}
 	return 0;
 }
@@ -409,6 +409,7 @@ inline int	Pcm8::Aot(void *tbl, int mode, int cnt) {
 		DmaArrayChainSetNextMtcMar();
 		Reset();
 		AdpcmReg = 0x47;	// ADPCM 動作開始
+		DmaOcr = 0x08;		// アレイチェイン
 	}
 	return 0;
 }
@@ -421,6 +422,7 @@ inline int	Pcm8::Lot(void *tbl, int mode) {
 		DmaLinkArrayChainSetNextMtcMar();
 		Reset();
 		AdpcmReg = 0x47;	// ADPCM 動作開始
+		DmaOcr = 0x0c;		// リンクアレイチェイン
 	}
 	return 0;
 }
