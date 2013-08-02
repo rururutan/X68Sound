@@ -124,7 +124,7 @@ Lfo::Lfo(void) {
 };
 
 inline void Lfo::Init() {
-	LfoTimeAdd = LFOPRECISION*62500/Samprate;
+	LfoTimeAdd = LFOPRECISION*OpmRate/Samprate;
 
 	LfoSmallCounter = 0;
 
@@ -142,7 +142,7 @@ inline void Lfo::Init() {
 	LfoStart();
 }
 inline void Lfo::InitSamprate() {
-	LfoTimeAdd = LFOPRECISION*62500/Samprate;
+	LfoTimeAdd = LFOPRECISION*OpmRate/Samprate;
 }
 
 inline void Lfo::LfoReset() {
@@ -209,8 +209,11 @@ inline void	Lfo::Update() {
 	}
 
 	LfoTime += LfoTimeAdd;
-	if (LfoTime >= LfoOverFlow) {
-		LfoTime = 0;
+//2008.4.19 sam C³ LfoTime‚ÌŒë·‚ð¬‚³‚­‚·‚é‚½‚ß,Žc—]‚ð•Û‘¶‚·‚é
+//	if (LfoTime >= LfoOverFlow) {
+//		LfoTime = 0;
+	while(LfoTime >= LfoOverFlow) {
+		LfoTime -=LfoOverFlow;
 		LfoSmallCounter += LfoSmallCounterStep;
 		switch (LfoWaveForm) {
 		case 0:
