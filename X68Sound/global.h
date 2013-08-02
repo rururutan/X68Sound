@@ -39,8 +39,8 @@ int	ErrorCode=0;
 //#define	MAXARTIME	(SIZEARTBL*(1<<MAXARTIME_BITS))
 
 
-int	Samprate = 22050;
-int	WaveOutSamp = 22050;
+int	Samprate = 44100;
+int	WaveOutSamp = 44100;
 int OpmWait = 240;	// 24.0ƒÊ‚“
 int	OpmRate = 62500;	// “ü—ÍƒNƒƒbƒN€64
 
