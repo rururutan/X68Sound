@@ -922,7 +922,7 @@ inline void Opm::pcmset62(int ndata) {
 				static int rate=0;
 				rate -= OpmRate;
 				while (rate < 0) {
-					rate += 62500;
+					rate += OpmRate;
 
 					timer();
 					ExecuteCmnd();
@@ -1189,10 +1189,9 @@ inline void Opm::pcmset22(int ndata) {
 		if (UseOpmFlag) {
 			static int rate=0;
 
-//			rate-=62500;
 			rate-=OpmRate;
 			while (rate<0) {
-				rate+=22050;
+				rate+=WaveOutSamp;
 
 				timer();
 				ExecuteCmnd();
@@ -1236,23 +1235,23 @@ inline void Opm::pcmset22(int ndata) {
 
 
 				// InpInpOpm[] Ç… OPM ÇÃèoóÕPCMÇÉXÉeÉåÉIâ¡éZ
-				InpInpOpm[0] =    (OpOut[0] & pan[0][0])
-								+ (OpOut[1] & pan[0][1])
-								+ (OpOut[2] & pan[0][2])
-								+ (OpOut[3] & pan[0][3])
-								+ (OpOut[4] & pan[0][4])
-								+ (OpOut[5] & pan[0][5])
-								+ (OpOut[6] & pan[0][6])
-								+ (OpOut[7] & pan[0][7]);
-				InpInpOpm[1] =    (OpOut[0] & pan[1][0])
-								+ (OpOut[1] & pan[1][1])
-								+ (OpOut[2] & pan[1][2])
-								+ (OpOut[3] & pan[1][3])
-								+ (OpOut[4] & pan[1][4])
-								+ (OpOut[5] & pan[1][5])
-								+ (OpOut[6] & pan[1][6])
-								+ (OpOut[7] & pan[1][7]);
-					
+				InpInpOpm[0] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[0][0]))
+								+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[0][1]))
+								+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[0][2]))
+								+ ((OpmChMask & 0x08) ? 0 : (OpOut[3] & pan[0][3]))
+								+ ((OpmChMask & 0x10) ? 0 : (OpOut[4] & pan[0][4]))
+								+ ((OpmChMask & 0x20) ? 0 : (OpOut[5] & pan[0][5]))
+								+ ((OpmChMask & 0x40) ? 0 : (OpOut[6] & pan[0][6]))
+								+ ((OpmChMask & 0x80) ? 0 : (OpOut[7] & pan[0][7]));
+				InpInpOpm[1] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[1][0]))
+								+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[1][1]))
+								+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[1][2]))
+								+ ((OpmChMask & 0x08) ? 0 : (OpOut[3] & pan[1][3]))
+								+ ((OpmChMask & 0x10) ? 0 : (OpOut[4] & pan[1][4]))
+								+ ((OpmChMask & 0x20) ? 0 : (OpOut[5] & pan[1][5]))
+								+ ((OpmChMask & 0x40) ? 0 : (OpOut[6] & pan[1][6]))
+								+ ((OpmChMask & 0x80) ? 0 : (OpOut[7] & pan[1][7]));
+
 				{
 
 					InpInpOpm[0] = (InpInpOpm[0]&(int)0xFFFFFC00)
@@ -1260,7 +1259,7 @@ inline void Opm::pcmset22(int ndata) {
 					InpInpOpm[1] = (InpInpOpm[1]&(int)0xFFFFFC00)
 									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5); // 8*-2^17 Å` 8*+2^17
 				}
-
+#if 0
 				InpInpOpm[0] += (InpInpOpm[0]<<4)+InpInpOpm[0];	// * 18
 				InpInpOpm[1] += (InpInpOpm[1]<<4)+InpInpOpm[1];	// * 18
 				InpOpm[0] = (InpInpOpm[0] + InpInpOpm_prev[0]+InpInpOpm_prev[0] + InpInpOpm_prev2[0]
@@ -1276,8 +1275,10 @@ inline void Opm::pcmset22(int ndata) {
 				InpOpm_prev2[1] = InpOpm_prev[1];
 				InpOpm_prev[0] = InpOpm[0];
 				InpOpm_prev[1] = InpOpm[1];
-
-//			}
+#else
+				InpOpm[0] = InpInpOpm[0];
+				InpOpm[1] = InpInpOpm[1];
+#endif
 
 			// ëSëÃÇÃâπó Çí≤êÆ
 			OutOpm[0] = (InpOpm[0]*TotalVolume) >> 8;
@@ -1293,13 +1294,14 @@ inline void Opm::pcmset22(int ndata) {
 
 				rate2 -= 15625;
 				if (rate2 < 0) {
-					rate2 += 22050;
+					rate2 += WaveOutSamp;
 
 					OutInpAdpcm[0] = OutInpAdpcm[1] = 0;
 					// OutInpAdpcm[] Ç… Adpcm ÇÃèoóÕPCMÇâ¡éZ
 					{
 						int	o;
 						o = adpcm.GetPcm();
+						if (!(OpmChMask & 0x100))
 						if (o != 0x80000000) {
 							OutInpAdpcm[0] += ((((int)(PpiReg)>>1)&1)-1) & o;
 							OutInpAdpcm[1] += (((int)(PpiReg)&1)-1) & o;
@@ -1314,6 +1316,7 @@ inline void Opm::pcmset22(int ndata) {
 							pan = pcm8[ch].GetMode();
 							int	o;
 							o = pcm8[ch].GetPcm();
+							if (!(OpmChMask & (0x100 << ch)))
 							if (o != 0x80000000) {
 								OutInpAdpcm[0] += (-(pan&1)) & o;
 								OutInpAdpcm[1] += (-((pan>>1)&1)) & o;
@@ -1415,7 +1418,7 @@ inline int Opm::GetPcm(void *buf, int ndata) {
 	}
 	PcmBuf = (short (*)[2])buf;
 	PcmBufPtr=0;
-	if (Samprate != 22050) {
+	if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
 		pcmset62(ndata);
 	} else {
 		pcmset22(ndata);
@@ -1481,22 +1484,17 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	_rev = rev;
 	
 	if (samprate == 44100) {
-		Samprate = 62500;
-		WaveOutSamp = 44100;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_44;
 		OPMLOWPASS = OPMLOWPASS_44;
 	} else if (samprate == 48000) {
-		Samprate = 62500;
-		WaveOutSamp = 48000;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else if (samprate == 22050) {
-		Samprate = 22050;
-		WaveOutSamp = 22050;
 	} else {
-		Samprate = 62500;
-		WaveOutSamp = samprate;
+		Samprate = samprate;
 	}
+	WaveOutSamp = samprate;
 
 #ifdef ROMEO
 	if ( UseOpmFlag == 2 ) {
@@ -1526,22 +1524,17 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 	_rev = 1.0;
 
 	if (samprate == 44100) {
-		Samprate = 62500;
-		WaveOutSamp = 44100;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_44;
 		OPMLOWPASS = OPMLOWPASS_44;
 	} else if (samprate == 48000) {
-		Samprate = 62500;
-		WaveOutSamp = 48000;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else if (samprate == 22050) {
-		Samprate = 22050;
-		WaveOutSamp = 22050;
 	} else {
-		Samprate = 62500;
-		WaveOutSamp = samprate;
+		Samprate = samprate;
 	}
+	WaveOutSamp = samprate;
 
 	MakeTable();
 	Reset();
@@ -1560,22 +1553,17 @@ inline int Opm::SetSamprate(int samprate) {
 	Free();
 	
 	if (samprate == 44100) {
-		Samprate = 62500;
-		WaveOutSamp = 44100;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_44;
 		OPMLOWPASS = OPMLOWPASS_44;
 	} else if (samprate == 48000) {
-		Samprate = 62500;
-		WaveOutSamp = 48000;
+		Samprate = OpmRate;
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
-	} else if (samprate == 22050) {
-		Samprate = 22050;
-		WaveOutSamp = 22050;
 	} else {
-		Samprate = 62500;
-		WaveOutSamp = samprate;
+		Samprate = samprate;
 	}
+	WaveOutSamp = samprate;
 
 	MakeTable();
 	ResetSamprate();
