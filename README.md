@@ -1,7 +1,13 @@
-
+﻿
 # X68Sound
 
 ## 変更履歴
+
+2013/08/03
+
+* SRC/Low-passFilterを無効化する(LinearDrive氏提供)
+* 44.1KHz/48KHzでは過去互換を取って従来通り
+* LFOの修正をVOPMから持ってきた。
 
 2013/02/12
 
