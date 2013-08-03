@@ -23,7 +23,7 @@ public:
 	volatile int	inp;			// FM変調の入力
 private:
 	int LfoPitch;	// 前回のlfopitch値, CULC_DELTA_T値の時はDeltaTを再計算する。
-	int	T;		// 現在時間 (0 <= T < SIZESINTBL*PREC<ISION)
+	int	T;		// 現在時間 (0 <= T < SIZESINTBL*PRECISION)
 	int DeltaT;	// Δt
 	int	Ame;		// 0(トレモロをかけない), -1(トレモロをかける)
 	int	LfoLevel;	// 前回のlfopitch&Ame値, CULC_ALPHA値の時はAlphaを再計算する。
