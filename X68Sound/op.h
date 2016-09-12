@@ -60,8 +60,8 @@ private:
 	int	Xr_cmp;
 	int	Xr_add;
 	int Xr_limit;
-	
-	
+
+
 	int	Note;	// ‰¹ŠK (0 <= Note < 10*12)
 	int	Kc;		// ‰¹ŠK (1 <= Kc <= 128)
 	int	Kf;		// ”÷’²® (0 <= Kf < 64)
@@ -82,6 +82,9 @@ private:
 	// add     :                               0                       0
 	// limit   : 0         D1l     63          63          63          63
 	// nextstat: DECAY     SUSTAIN SUSTAIN_MAX SUSTAIN_MAX RELEASE_MAX RELEASE_MAX
+
+	int keyon;
+	int csmkeyon;
 
 	inline void	CulcArStep();
 	inline void	CulcD1rStep();
@@ -105,8 +108,8 @@ public:
 	inline void SetAMED1R(int n);
 	inline void SetDT2D2R(int n);
 	inline void SetD1LRR(int n);
-	inline void KeyON();
-	inline void KeyOFF();
+	inline void KeyON(int csm);
+	inline void KeyOFF(int csm);
 	inline void Envelope(int env_counter);
 	inline void SetNFRQ(int nfrq);
 
@@ -183,6 +186,9 @@ inline void Op::Init() {
 	Xr_cmp = StatTbl[Xr_stat].cmp;
 	Xr_add = StatTbl[Xr_stat].add;
 	Xr_limit = StatTbl[Xr_stat].limit;
+
+	keyon = 0;
+	csmkeyon = 0;
 
 	CulcArStep();
 	CulcD1rStep();
@@ -369,46 +375,66 @@ inline void Op::SetD1LRR(int n) {
 	CulcRrStep();
 };
 
-inline void Op::KeyON() {
-	if (Xr_stat >= RELEASE) {
-		// KEYON
-		T = 0;
+inline void Op::KeyON(int csm) {
+	if (keyon == 0) {
+		if (Xr_stat >= RELEASE) {
+			// KEYON
+			T = 0;
 
-		if (Xr_el == 0) {
-			Xr_stat = DECAY;
-			Xr_and = StatTbl[Xr_stat].and;
-			Xr_cmp = StatTbl[Xr_stat].cmp;
-			Xr_add = StatTbl[Xr_stat].add;
-			Xr_limit = StatTbl[Xr_stat].limit;
-			if ((Xr_el>>4) == Xr_limit) {
-				Xr_stat = NEXTSTAT[Xr_stat];
+			if (Xr_el == 0) {
+				Xr_stat = DECAY;
+				Xr_and = StatTbl[Xr_stat].and;
+				Xr_cmp = StatTbl[Xr_stat].cmp;
+				Xr_add = StatTbl[Xr_stat].add;
+				Xr_limit = StatTbl[Xr_stat].limit;
+				if ((Xr_el>>4) == Xr_limit) {
+					Xr_stat = NEXTSTAT[Xr_stat];
+					Xr_and = StatTbl[Xr_stat].and;
+					Xr_cmp = StatTbl[Xr_stat].cmp;
+					Xr_add = StatTbl[Xr_stat].add;
+					Xr_limit = StatTbl[Xr_stat].limit;
+				}
+			} else {
+				Xr_stat = ATACK;
 				Xr_and = StatTbl[Xr_stat].and;
 				Xr_cmp = StatTbl[Xr_stat].cmp;
 				Xr_add = StatTbl[Xr_stat].add;
 				Xr_limit = StatTbl[Xr_stat].limit;
 			}
+		}
+
+		if (csm == 0) {
+			keyon = 1;
+			csmkeyon = 0;
 		} else {
-			Xr_stat = ATACK;
+			csmkeyon = 1;
+		}
+	}
+};
+inline void Op::KeyOFF(int csm) {
+	if (keyon > 0 || csmkeyon > 0) {
+
+		if (csm == 0) {
+			keyon = 0;
+		} else {
+			csmkeyon = 0;
+		}
+
+		if (keyon == 0 && csmkeyon == 0) {
+			Xr_stat = RELEASE;
 			Xr_and = StatTbl[Xr_stat].and;
 			Xr_cmp = StatTbl[Xr_stat].cmp;
 			Xr_add = StatTbl[Xr_stat].add;
 			Xr_limit = StatTbl[Xr_stat].limit;
+			if ((Xr_el>>4) >= 63 || csm > 0) {
+				Xr_el = 1024;
+				Xr_stat = MAXSTAT[Xr_stat];
+				Xr_and = StatTbl[Xr_stat].and;
+				Xr_cmp = StatTbl[Xr_stat].cmp;
+				Xr_add = StatTbl[Xr_stat].add;
+				Xr_limit = StatTbl[Xr_stat].limit;
+			}
 		}
-	}
-};
-inline void Op::KeyOFF() {
-	Xr_stat = RELEASE;
-	Xr_and = StatTbl[Xr_stat].and;
-	Xr_cmp = StatTbl[Xr_stat].cmp;
-	Xr_add = StatTbl[Xr_stat].add;
-	Xr_limit = StatTbl[Xr_stat].limit;
-	if ((Xr_el>>4) >= 63) {
-		Xr_el = 1024;
-		Xr_stat = MAXSTAT[Xr_stat];
-		Xr_and = StatTbl[Xr_stat].and;
-		Xr_cmp = StatTbl[Xr_stat].cmp;
-		Xr_add = StatTbl[Xr_stat].add;
-		Xr_limit = StatTbl[Xr_stat].limit;
 	}
 };
 

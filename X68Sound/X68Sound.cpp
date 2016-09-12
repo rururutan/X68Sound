@@ -29,7 +29,7 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 
 		playingblk = (playingblk+1) & (N_waveblk-1);
 		int playptr = playingblk * Blk_Samples;
-		
+	
 		int genptr = opm.PcmBufPtr;
 		if (genptr < playptr) {
 			genptr += opm.PcmBufSize;
@@ -73,7 +73,7 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 
 	while (GetMessage( &Msg, NULL, 0, 0)) {
 		if (Msg.message == THREADMES_WAVEOUTDONE) {
-			
+
 			waveOutWrite(hwo, lpwh+waveblk, sizeof(WAVEHDR));
 
 			++waveblk;
@@ -101,7 +101,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 			opm.PcmBufPtr = setPcmBufPtr;
 			setPcmBufPtr = -1;
 		}
-		
+
 		opm.PushRegs();
 
 		if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
@@ -255,4 +255,8 @@ extern "C" int X68Sound_ErrorCode() {
 }
 extern "C" int X68Sound_DebugValue() {
 	return DebugValue;
+}
+
+extern "C" void X68Sound_TimerA() {
+	opm.CsmKeyOn();
 }

@@ -174,6 +174,7 @@ public:
 	inline void PopRegs();
 
 	inline void SetMask(int v);
+	inline void CsmKeyOn();
 };
 
 
@@ -279,7 +280,7 @@ inline void Opm::Reset() {
 	CmndReadIdx = CmndWriteIdx = 0;
 
 	CalcCmndRate();
-	
+
 	// 高音フィルター用バッファをクリア
 	InpInpOpm[0] = InpInpOpm[1] =
 	InpInpOpm_prev[0] = InpInpOpm_prev[1] = 0;
@@ -337,7 +338,7 @@ inline void Opm::Reset() {
 			pan[0][ch] = pan[1][ch] = 0;
 		}
 	}
-	
+
 	// エンベロープ用カウンタを初期化
 	{
 		EnvCounter1 = 0;
@@ -459,7 +460,7 @@ inline void Opm::ResetSamprate() {
 			op[ch][3].InitSamprate();
 		}
 	}
-	
+
 	// LFOを初期化
 	lfo.InitSamprate();
 
@@ -749,9 +750,9 @@ inline void Opm::ExecuteCmndCore( unsigned char regno, unsigned char data ) {
 			ch = data & 7;
 			for (s=0,bit=8; s<4; ++s,bit+=bit) {
 				if (data & bit) {
-					op[ch][s].KeyON();
+					op[ch][s].KeyON(0);
 				} else {
-					op[ch][s].KeyOFF();
+					op[ch][s].KeyOFF(0);
 				}
 			}
 		}
@@ -2065,4 +2066,10 @@ inline void Opm::MemReadFunc(int (CALLBACK *func)(unsigned char *)) {
 
 inline void Opm::SetMask(int v) {
 	OpmChMask = v;
+}
+
+inline void Opm::CsmKeyOn() {
+	for (int ch=0; ch<8; ch++) {
+		op[ch][0].KeyON(1);
+	}
 }
