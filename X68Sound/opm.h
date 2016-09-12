@@ -58,7 +58,7 @@ private:
 	int	TimerAcounter;	// タイマーAのカウンター値
 	int	TimerB;			// タイマーBのオーバーフロー設定値
 	int	TimerBcounter;	// タイマーBのカウンター値
-	volatile int	TimerReg;		// タイマー制御レジスタ (OPMreg$14の下位4ビット)
+	volatile int	TimerReg;		// タイマー制御レジスタ (OPMreg$14の下位4ビット+7ビット)
 	volatile int	StatReg;		// OPMステータスレジスタ ($E90003の下位2ビット)
 	void (CALLBACK *OpmIntProc)();	// OPM割り込みコールバック関数
 
@@ -677,7 +677,7 @@ inline void Opm::OpmPoke(unsigned char data) {
 		{
 			while (_InterlockedCompareExchange(&TimerSemapho, 1, 0) == 1);
 
-			TimerReg = data & 0x0F;
+			TimerReg = data & 0x8F;
 			StatReg &= 0xFF-((data>>4)&3);
 
 			TimerSemapho = 0;
@@ -1440,6 +1440,7 @@ inline void Opm::timer() {
 		if (TimerAcounter >= TimerA) {
 			flag_set |= ((TimerReg>>2) & 0x01);
 			TimerAcounter = 0;
+			if (TimerReg & 0x80) CsmKeyOn();
 		}
 	}
 	if (TimerReg & 0x02) {	// TimerB 動作中
