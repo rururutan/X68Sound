@@ -3,6 +3,9 @@
 
 ## 変更履歴
 
+2016/09/12
+* CSM音声合成モードの実装(GIMONS氏提供)
+
 2013/08/03
 
 * SRC/Low-passFilterを無効化する(LinearDrive氏提供)
