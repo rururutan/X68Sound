@@ -105,7 +105,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 		opm.PushRegs();
 
 		if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
-			opm.pcmset62(nSamples);
+			opm.pcmset22(nSamples);
 		} else {
 			opm.pcmset22(nSamples);
 		}
