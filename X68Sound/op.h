@@ -9,8 +9,6 @@
 #define CULC_DELTA_T	(0x7FFFFFFF)
 #define	CULC_ALPHA		(0x7FFFFFFF)
 
-#define IS_ZERO_CLOSS(a,b) ((a<0 && b>=0) || (a>0 && b<=0))
-
 const int NEXTSTAT[RELEASE_MAX+1]={
 	DECAY, SUSTAIN, SUSTAIN_MAX, SUSTAIN_MAX, RELEASE_MAX, RELEASE_MAX,
 };
@@ -28,9 +26,6 @@ private:
 	int	Ame;		// 0(トレモロをかけない), -1(トレモロをかける)
 	int	LfoLevel;	// 前回のlfopitch&Ame値, CULC_ALPHA値の時はAlphaを再計算する。
 	int	Alpha;	// 最終的なエンベロープ出力値
-	//追加 2006.03.26 sam Lfoの更新をSinテーブルの0クロス時に修正するため
-	bool	LfoLevelReCalc;
-	short	SinBf;
 public:
 	volatile int	*out;			// オペレータの出力先
 	volatile int	*out2;			// オペレータの出力先(alg=5時のM1用)
@@ -60,8 +55,8 @@ private:
 	int	Xr_cmp;
 	int	Xr_add;
 	int Xr_limit;
-
-
+	
+	
 	int	Note;	// 音階 (0 <= Note < 10*12)
 	int	Kc;		// 音階 (1 <= Kc <= 128)
 	int	Kf;		// 微調整 (0 <= Kf < 64)
@@ -116,6 +111,9 @@ public:
 	inline void Output0(int lfopitch, int lfolevel);		// オペレータ0用
 	inline void Output(int lfopitch, int lfolevel);		// 一般オペレータ用
 	inline void Output32(int lfopitch, int lfolevel);		// スロット32用
+	inline void Output0_22(int lfopitch, int lfolevel);		// オペレータ0用
+	inline void Output_22(int lfopitch, int lfolevel);		// 一般オペレータ用
+	inline void Output32_22(int lfopitch, int lfolevel);		// スロット32用
 };
 
 
@@ -155,6 +153,7 @@ inline void Op::Init() {
 	Mul = 2;
 	Ame = 0;
 
+//	NoiseStep = (__int64)(1<<26)*(__int64)62500/Samprate;
 	NoiseStep = (__int64)(1<<26)*(__int64)OpmRate/Samprate;
 	SetNFRQ(0);
 	NoiseValue = 1;
@@ -196,15 +195,12 @@ inline void Op::Init() {
 	CulcRrStep();
 	CulcPitch();
 	CulcDt1Pitch();
-
-	//2006.03.26 追加 sam lfo更新タイミング修正のため
-	SinBf=0;
-	LfoLevelReCalc=true;
 }
 
 inline void Op::InitSamprate() {
 	LfoPitch = CULC_DELTA_T;
 
+//	NoiseStep = (__int64)(1<<26)*(__int64)62500/Samprate;
 	NoiseStep = (__int64)(1<<26)*(__int64)OpmRate/Samprate;
 	CulcNoiseCycle();
 
@@ -335,8 +331,7 @@ inline void Op::SetDT1MUL(int n) {
 
 inline void Op::SetTL(int n) {
 	Tl = (128-(n&127))<<3;
-//	LfoLevel = CULC_ALPHA;
-	LfoLevelReCalc=true;
+	LfoLevel = CULC_ALPHA;
 };
 
 inline void Op::SetKSAR(int n) {
@@ -445,8 +440,7 @@ inline void Op::Envelope(int env_counter) {
 			// ATACK
 			Xr_step += Xr_add;
 			Xr_el += ((~Xr_el)*(Xr_step>>3)) >> 4;
-//			LfoLevel = CULC_ALPHA;
-			LfoLevelReCalc=true;
+			LfoLevel = CULC_ALPHA;
 			Xr_step &= 7;
 
 			if (Xr_el <= 0) {
@@ -468,8 +462,7 @@ inline void Op::Envelope(int env_counter) {
 			// DECAY, SUSTAIN, RELEASE
 			Xr_step += Xr_add;
 			Xr_el += Xr_step>>3;
-//			LfoLevel = CULC_ALPHA;
-			LfoLevelReCalc=true;
+			LfoLevel = CULC_ALPHA;
 			Xr_step &= 7;
 
 			int e = Xr_el>>4;
@@ -493,8 +486,7 @@ inline void Op::Envelope(int env_counter) {
 
 inline void Op::SetNFRQ(int nfrq) {
 	if ((Nfrq ^ nfrq) & 0x80) {
-//		LfoLevel = CULC_ALPHA;
-		LfoLevelReCalc=true;
+		LfoLevel = CULC_ALPHA;
 	}
 	Nfrq = nfrq;
 	CulcNoiseCycle();
@@ -519,17 +511,14 @@ inline void Op::Output0(int lfopitch, int lfolevel) {
 		LfoPitch = lfopitch;
 	}
 	T += DeltaT;
-	short Sin=(SINTBL[(((T+Out2Fb)>>PRECISION_BITS))&(SIZESINTBL-1)]);
 
 	int lfolevelame = lfolevel & Ame;
-	if ((LfoLevel != lfolevelame || LfoLevelReCalc)&& IS_ZERO_CLOSS(SinBf,Sin)) {
+	if (LfoLevel != lfolevelame) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
-		LfoLevelReCalc=false;
 	}
 	int o = (Alpha)
-		* (int)Sin;
-	SinBf=Sin;
+		* (int)(SINTBL[(((T+Out2Fb)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
 
 //	int o2 = (o+Inp_last) >> 1;
 //	Out2Fb = (o+o) >> Fl;
@@ -551,17 +540,14 @@ inline void Op::Output(int lfopitch, int lfolevel) {
 		LfoPitch = lfopitch;
 	}
 	T += DeltaT;
-	short Sin=(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]);
 
 	int lfolevelame = lfolevel & Ame;
-	if ((LfoLevel != lfolevelame || LfoLevelReCalc)&& IS_ZERO_CLOSS(SinBf,Sin)) {
+	if (LfoLevel != lfolevelame) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
-		LfoLevelReCalc=false;
 	}
 	int o = (Alpha)
-		* (int)Sin;
-	SinBf=Sin;
+		* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
 
 	*out += o;
 };
@@ -575,17 +561,14 @@ inline void Op::Output32(int lfopitch, int lfolevel) {
 	T += DeltaT;
 
 	int o;
-	short Sin=(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]);
 	if (NoiseCycle == 0) {
 		int lfolevelame = lfolevel & Ame;
-		if ((LfoLevel != lfolevelame || LfoLevelReCalc)&& IS_ZERO_CLOSS(SinBf,Sin)) {
+		if (LfoLevel != lfolevelame) {
 			Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 			LfoLevel = lfolevelame;
-			LfoLevelReCalc=false;
 		}
 		o = (Alpha)
-			* (int)Sin;
-		SinBf=Sin;
+			* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
 	} else {
 		NoiseCounter -= NoiseStep;
 		if (NoiseCounter <= 0) {
@@ -594,10 +577,91 @@ inline void Op::Output32(int lfopitch, int lfolevel) {
 		}
 
 		int lfolevelame = lfolevel & Ame;
-		if (LfoLevel != lfolevelame || LfoLevelReCalc) {
+		if (LfoLevel != lfolevelame) {
 			Alpha = (int)(NOISEALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 			LfoLevel = lfolevelame;
-			LfoLevelReCalc=false;
+		}
+		o = (Alpha)
+			* NoiseValue * MAXSINVAL;
+	}
+
+	*out += o;
+};
+
+inline void Op::Output0_22(int lfopitch, int lfolevel) {
+	if (LfoPitch != lfopitch) {
+//		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>1;
+		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>(6+1);
+		LfoPitch = lfopitch;
+	}
+	T += DeltaT;
+
+	int lfolevelame = lfolevel & Ame;
+	if (LfoLevel != lfolevelame) {
+		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
+		LfoLevel = lfolevelame;
+	}
+	int o = (Alpha)
+		* (int)(SINTBL[(((T+Out2Fb)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	Out2Fb = ((o + Inp_last) & Fl_mask) >> Fl;
+	Inp_last = o;
+
+//	*out += o;
+//	*out2 += o;	// alg=5用
+//	*out3 += o; // alg=5用
+	*out = o;
+	*out2 = o;	// alg=5用
+	*out3 = o; // alg=5用
+};
+
+inline void Op::Output_22(int lfopitch, int lfolevel) {
+	if (LfoPitch != lfopitch) {
+//		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>1;
+		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>(6+1);
+		LfoPitch = lfopitch;
+	}
+	T += DeltaT;
+
+	int lfolevelame = lfolevel & Ame;
+	if (LfoLevel != lfolevelame) {
+		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
+		LfoLevel = lfolevelame;
+	}
+	int o = (Alpha)
+		* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	*out += o;
+};
+
+inline void Op::Output32_22(int lfopitch, int lfolevel) {
+	if (LfoPitch != lfopitch) {
+//		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>1;
+		DeltaT = ((STEPTBL[Pitch+lfopitch]+Dt1Pitch)*Mul)>>(6+1);
+		LfoPitch = lfopitch;
+	}
+	T += DeltaT;
+
+	int o;
+	if (NoiseCycle == 0) {
+		int lfolevelame = lfolevel & Ame;
+		if (LfoLevel != lfolevelame) {
+			Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
+			LfoLevel = lfolevelame;
+		}
+		o = (Alpha)
+			* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+	} else {
+		NoiseCounter -= NoiseStep;
+		if (NoiseCounter <= 0) {
+			NoiseValue = (int)((irnd()>>30)&2)-1;
+			NoiseCounter += NoiseCycle;
+		}
+
+		int lfolevelame = lfolevel & Ame;
+		if (LfoLevel != lfolevelame) {
+			Alpha = (int)(NOISEALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
+			LfoLevel = lfolevelame;
 		}
 		o = (Alpha)
 			* NoiseValue * MAXSINVAL;
