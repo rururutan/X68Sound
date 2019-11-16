@@ -1486,13 +1486,9 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	_rev = rev;
 	
 	if (samprate == 44100) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_44;
-		OPMLOWPASS = OPMLOWPASS_44;
+		Samprate = samprate;
 	} else if (samprate == 48000) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_48;
-		OPMLOWPASS = OPMLOWPASS_48;
+		Samprate = samprate;
 	} else {
 		Samprate = samprate;
 	}
@@ -1526,13 +1522,9 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 	_rev = 1.0;
 
 	if (samprate == 44100) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_44;
-		OPMLOWPASS = OPMLOWPASS_44;
+		Samprate = samprate;
 	} else if (samprate == 48000) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_48;
-		OPMLOWPASS = OPMLOWPASS_48;
+		Samprate = samprate;
 	} else {
 		Samprate = samprate;
 	}
@@ -1555,13 +1547,9 @@ inline int Opm::SetSamprate(int samprate) {
 	Free();
 	
 	if (samprate == 44100) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_44;
-		OPMLOWPASS = OPMLOWPASS_44;
+		Samprate = samprate;
 	} else if (samprate == 48000) {
-		Samprate = OpmRate;
-		OPMLPF_ROW = OPMLPF_ROW_48;
-		OPMLOWPASS = OPMLOWPASS_48;
+		Samprate = samprate;
 	} else {
 		Samprate = samprate;
 	}
