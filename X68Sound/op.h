@@ -9,6 +9,8 @@
 #define CULC_DELTA_T	(0x7FFFFFFF)
 #define	CULC_ALPHA		(0x7FFFFFFF)
 
+#define	KC_KF_DT2_MAX	6912	//((9*12)<<6)
+
 const int NEXTSTAT[RELEASE_MAX+1]={
 	DECAY, SUSTAIN, SUSTAIN_MAX, SUSTAIN_MAX, RELEASE_MAX, RELEASE_MAX,
 };
@@ -280,6 +282,9 @@ inline void	Op::CulcRrStep() {
 };
 inline void Op::CulcPitch() {
 	Pitch = (Note<<6)+Kf+Dt2;
+	if (Pitch>KC_KF_DT2_MAX){
+		Pitch=KC_KF_DT2_MAX;
+	}
 }
 inline void Op::CulcDt1Pitch() {
 	Dt1Pitch = DT1TBL[(Kc&0xFC)+(Dt1&3)];
