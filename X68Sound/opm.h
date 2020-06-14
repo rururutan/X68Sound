@@ -1420,7 +1420,7 @@ inline int Opm::GetPcm(void *buf, int ndata) {
 	PcmBuf = (short (*)[2])buf;
 	PcmBufPtr=0;
 	if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
-		pcmset62(ndata);
+		pcmset22(ndata);
 	} else {
 		pcmset22(ndata);
 	}
