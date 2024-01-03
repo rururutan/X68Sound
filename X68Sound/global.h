@@ -6,6 +6,7 @@
 #include	<conio.h>
 #include	<ctype.h>
 #include	<intrin.h>
+#include	<stdint.h>
 
 #define	NODEBUG
 

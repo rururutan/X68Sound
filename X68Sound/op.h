@@ -155,8 +155,8 @@ inline void Op::Init() {
 	Mul = 2;
 	Ame = 0;
 
-//	NoiseStep = (__int64)(1<<26)*(__int64)62500/Samprate;
-	NoiseStep = (__int64)(1<<26)*(__int64)OpmRate/Samprate;
+//	NoiseStep = (int64_t)(1<<26)*(int64_t)62500/Samprate;
+	NoiseStep = (int64_t)(1<<26)*(int64_t)OpmRate/Samprate;
 	SetNFRQ(0);
 	NoiseValue = 1;
 
@@ -202,8 +202,8 @@ inline void Op::Init() {
 inline void Op::InitSamprate() {
 	LfoPitch = CULC_DELTA_T;
 
-//	NoiseStep = (__int64)(1<<26)*(__int64)62500/Samprate;
-	NoiseStep = (__int64)(1<<26)*(__int64)OpmRate/Samprate;
+//	NoiseStep = (int64_t)(1<<26)*(int64_t)62500/Samprate;
+	NoiseStep = (int64_t)(1<<26)*(int64_t)OpmRate/Samprate;
 	CulcNoiseCycle();
 
 	CulcArStep();

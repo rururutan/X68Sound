@@ -593,7 +593,7 @@ inline void Opm::MakeTable() {
 				} else {
 					step = STEPTBL_O2[notekf] >> (3-oct);
 				}
-				STEPTBL[oct*12*64+notekf] = step * 64 * (__int64)(OpmRate)/Samprate;
+				STEPTBL[oct*12*64+notekf] = step * 64 * (int64_t)(OpmRate)/Samprate;
 			}
 		}
 //		for (notekf=0; notekf<11*12*64; ++notekf) {
@@ -605,7 +605,7 @@ inline void Opm::MakeTable() {
 	{
 		int i;
 		for (i=0; i<=128+4-1; ++i) {
-			DT1TBL[i] = DT1TBL_org[i] * 64 * (__int64)(OpmRate)/Samprate;
+			DT1TBL[i] = DT1TBL_org[i] * 64 * (int64_t)(OpmRate)/Samprate;
 		}
 
 	}
