@@ -24,7 +24,7 @@ Opm	opm;
 void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance, 
 						  DWORD dwParam1, DWORD dwParam2) {
 	if (uMsg == WOM_DONE && thread_flag) {
-		timer_start_flag = 1;	// ƒ}ƒ‹ƒ`ƒƒfƒBƒAƒ^ƒCƒ}[‚Ìˆ—‚ğŠJn
+		timer_start_flag = 1;	// ï¿½}ï¿½ï¿½ï¿½`ï¿½ï¿½ï¿½fï¿½Bï¿½Aï¿½^ï¿½Cï¿½}ï¿½[ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½n
 
 
 		playingblk = (playingblk+1) & (N_waveblk-1);
@@ -37,12 +37,12 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 		genptr -= playptr;
 		if (genptr <= Late_Samples) {
 			if (Late_Samples-Faster_Limit <= genptr) {
-				// ‰¹¶¬‚ª’x‚ê‚Ä‚¢‚é
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½xï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
 				nSamples = Betw_Samples_Faster;
 			} else {
-				// ‰¹¶¬‚ªi‚İ‚·‚¬‚Ä‚¢‚é
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½İ‚ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
 //				nSamples = Betw_Samples_VerySlower;
-				// ‰¹¶¬‚ª’x‚ê‚·‚¬‚Ä‚¢‚é
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½xï¿½ê‚·ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
 				while (ptr >= opm.PcmBufSize) ptr -= opm.PcmBufSize;
@@ -50,10 +50,10 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 			}
 		} else {
 			if (genptr <= Late_Samples+Slower_Limit) {
-				// ‰¹¶¬‚ªi‚ñ‚Å‚¢‚é
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½Å‚ï¿½ï¿½ï¿½
 				nSamples = Betw_Samples_Slower;
 			} else {
-				// ‰¹¶¬‚ªi‚İ‚·‚¬‚Ä‚¢‚é
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½İ‚ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
 //				nSamples = Betw_Samples_VerySlower;
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
@@ -92,7 +92,7 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 }
 
 
-// ƒ}ƒ‹ƒ`ƒƒfƒBƒAƒ^ƒCƒ}[
+// ï¿½}ï¿½ï¿½ï¿½`ï¿½ï¿½ï¿½fï¿½Bï¿½Aï¿½^ï¿½Cï¿½}ï¿½[
 void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
 		if (!timer_start_flag) return;
 
@@ -259,4 +259,30 @@ extern "C" int X68Sound_DebugValue() {
 
 extern "C" void X68Sound_TimerA() {
 	opm.CsmKeyOn();
+}
+
+// DLLã‚¨ãƒ³ãƒˆãƒªãƒã‚¤ãƒ³ãƒˆ - ç’°å¢ƒå¤‰æ•°ã‹ã‚‰è¨­å®šã‚’èª­ã¿è¾¼ã‚€
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+	switch (fdwReason) {
+		case DLL_PROCESS_ATTACH:
+			// DLLãŒãƒ­ãƒ¼ãƒ‰ã•ã‚ŒãŸã¨ãã«ç’°å¢ƒå¤‰æ•°ã‚’èª­ã¿è¾¼ã‚€
+			LoadConfigFromEnvironment();
+
+			if (g_Config.enable_debug_log) {
+				OutputDebugStringA("[X68Sound] DLL loaded successfully\n");
+			}
+			break;
+
+		case DLL_PROCESS_DETACH:
+			if (g_Config.enable_debug_log) {
+				OutputDebugStringA("[X68Sound] DLL unloading\n");
+			}
+			break;
+
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+			// ã‚¹ãƒ¬ãƒƒãƒ‰ã”ã¨ã®å‡¦ç†ã¯ä¸è¦
+			break;
+	}
+	return TRUE;
 }

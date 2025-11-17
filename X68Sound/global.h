@@ -15,6 +15,86 @@
 int	DebugValue=0;
 int	ErrorCode=0;
 
+// 環境変数による設定構造体
+struct X68SoundConfig {
+	int pcm_buffer_size;      // PCMバッファサイズ (デフォルト: 5)
+	int betw_time;            // Between time in ms (デフォルト: 5)
+	int late_time;            // Latency time in ms (デフォルト: 200)
+	double rev_margin;        // Sample rate revision margin (デフォルト: 1.0)
+	int enable_debug_log;     // デバッグログ有効化 (0/1)
+	int pcm_buf_multiplier;   // バッファサイズ乗数 (デフォルト: 1)
+};
+
+// グローバルコンフィグインスタンス
+X68SoundConfig g_Config = {
+	5,      // pcm_buffer_size
+	5,      // betw_time
+	200,    // late_time
+	1.0,    // rev_margin
+	0,      // enable_debug_log
+	1       // pcm_buf_multiplier
+};
+
+// 環境変数読み取りヘルパー関数
+inline int GetEnvInt(const char* name, int defaultValue) {
+	char buffer[256];
+	DWORD result = GetEnvironmentVariableA(name, buffer, sizeof(buffer));
+	if (result > 0 && result < sizeof(buffer)) {
+		int value = atoi(buffer);
+		if (value > 0) return value;
+	}
+	return defaultValue;
+}
+
+inline double GetEnvDouble(const char* name, double defaultValue) {
+	char buffer[256];
+	DWORD result = GetEnvironmentVariableA(name, buffer, sizeof(buffer));
+	if (result > 0 && result < sizeof(buffer)) {
+		double value = atof(buffer);
+		if (value > 0.0) return value;
+	}
+	return defaultValue;
+}
+
+inline void LoadConfigFromEnvironment() {
+	g_Config.pcm_buffer_size = GetEnvInt("X68SOUND_PCM_BUFFER", 5);
+	g_Config.betw_time = GetEnvInt("X68SOUND_BETW_TIME", 5);
+	g_Config.late_time = GetEnvInt("X68SOUND_LATE_TIME", 200);
+	g_Config.rev_margin = GetEnvDouble("X68SOUND_REV_MARGIN", 1.0);
+	g_Config.enable_debug_log = GetEnvInt("X68SOUND_DEBUG", 0);
+	g_Config.pcm_buf_multiplier = GetEnvInt("X68SOUND_BUF_MULTIPLIER", 1);
+
+	// バリデーション
+	if (g_Config.pcm_buffer_size < 2) g_Config.pcm_buffer_size = 2;
+	if (g_Config.pcm_buffer_size > 20) g_Config.pcm_buffer_size = 20;
+	if (g_Config.betw_time < 1) g_Config.betw_time = 1;
+	if (g_Config.betw_time > 50) g_Config.betw_time = 50;
+	if (g_Config.late_time < 50) g_Config.late_time = 50;
+	if (g_Config.late_time > 1000) g_Config.late_time = 1000;
+	if (g_Config.rev_margin < 0.1) g_Config.rev_margin = 0.1;
+	if (g_Config.rev_margin > 10.0) g_Config.rev_margin = 10.0;
+	if (g_Config.pcm_buf_multiplier < 1) g_Config.pcm_buf_multiplier = 1;
+	if (g_Config.pcm_buf_multiplier > 8) g_Config.pcm_buf_multiplier = 8;
+
+	// デバッグログ
+	if (g_Config.enable_debug_log) {
+		char logMsg[512];
+		sprintf(logMsg,
+			"[X68Sound] Config loaded:\n"
+			"  PCM_BUFFER=%d\n"
+			"  BETW_TIME=%d ms\n"
+			"  LATE_TIME=%d ms\n"
+			"  REV_MARGIN=%.2f\n"
+			"  BUF_MULTIPLIER=%d\n",
+			g_Config.pcm_buffer_size,
+			g_Config.betw_time,
+			g_Config.late_time,
+			g_Config.rev_margin,
+			g_Config.pcm_buf_multiplier);
+		OutputDebugStringA(logMsg);
+	}
+}
+
 #define	N_CH	8
 
 
@@ -42,8 +122,8 @@ int	ErrorCode=0;
 
 int	Samprate = 44100;
 int	WaveOutSamp = 44100;
-int OpmWait = 240;	// 24.0�ʂ�
-int	OpmRate = 62500;	// ���̓N���b�N��64
+int OpmWait = 240;	// 24.0�ʂ�
+int	OpmRate = 62500;	// ���̓N���b�N��64
 
 int	STEPTBL[11*12*64];
 //int	STEPTBL3[11*12*64];
@@ -292,20 +372,20 @@ unsigned int irnd(void) {
 
 
 
-int	TotalVolume;	// ���� x/256
+int	TotalVolume;	// ���� x/256
 
 volatile static long TimerSemapho=0;
 
 #define	OPMLPF_COL	64
 
 #define	OPMLPF_ROW_44	441
-static double opmlowpass_dummy_44;	// 64bit���E���킹
+static double opmlowpass_dummy_44;	// 64bit���E���킹
 static short OPMLOWPASS_44[OPMLPF_ROW_44][OPMLPF_COL] = {
 	#include "opmlowpass_44.dat"
 };
 
 #define	OPMLPF_ROW_48	96
-static double opmlowpass_dummy_48;	// 64bit���E���킹
+static double opmlowpass_dummy_48;	// 64bit���E���킹
 static short OPMLOWPASS_48[OPMLPF_ROW_48][OPMLPF_COL] = {
 	#include "opmlowpass_48.dat"
 };
