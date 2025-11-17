@@ -7,16 +7,16 @@
 
 #ifdef C86CTL
 
-// c86ctl用定義
+// c86ctl definitions
 typedef HRESULT (WINAPI *C86CtlCreateInstance)( REFIID, LPVOID* );
 #endif
 
 class Opm {
 	char *Author;
-	Op	op[8][4];	// オペレータ0～31
-	int	EnvCounter1;	// エンベロープ用カウンタ1 (0,1,2,3,4,5,6,...)
-	int	EnvCounter2;	// エンベロープ用カウンタ2 (3,2,1,3,2,1,3,2,...)
-	int	pan[2][N_CH];	// 0:無音 -1:出力
+	Op	op[8][4];	// Operators 0-31
+	int	EnvCounter1;	// Envelope counter 1 (0,1,2,3,4,5,6,...)
+	int	EnvCounter2;	// Envelope counter 2 (3,2,1,3,2,1,3,2,...)
+	int	pan[2][N_CH];	// 0:mute -1:output
 //	int pms[N_CH];	// 0, 1, 2, 4, 10, 20, 80, 140
 
 //	int	pmd;
@@ -79,19 +79,19 @@ private:
 		OutOutInpAdpcm[2],OutOutInpAdpcm_prev[2];
 	
 	volatile unsigned char	PpiReg;
-	unsigned char	AdpcmBaseClock;	// ADPCMクロック切り替え(0:8MHz 1:4Mhz)
+	unsigned char	AdpcmBaseClock;	// ADPCM clock switching (0:8MHz 1:4MHz)
 	inline void SetAdpcmRate();
-	unsigned char	OpmRegNo;		// 現在指定されているOPMレジスタ番号
-	unsigned char	OpmRegNo_backup;		// バックアップ用OPMレジスタ番号
-	void (CALLBACK *BetwIntProc)();	// マルチメディアタイマー割り込み
+	unsigned char	OpmRegNo;		// Currently specified OPM register number
+	unsigned char	OpmRegNo_backup;		// Backup OPM register number
+	void (CALLBACK *BetwIntProc)();	// Multimedia timer interrupt
 	int (CALLBACK *WaveFunc)();		// WaveFunc
-	int	UseOpmFlag;		// OPMを利用するかどうかのフラグ
-	int	UseAdpcmFlag;	// ADPCMを利用するかどうかのフラグ
+	int	UseOpmFlag;		// Flag indicating whether to use OPM
+	int	UseAdpcmFlag;	// Flag indicating whether to use ADPCM
 	int _betw;
 	int _pcmbuf;
 	int _late;
 	int _rev;
-	int Dousa_mode;		// 0:非動作 1:X68Sound_Start中  2:X68Sound_PcmStart中
+	int Dousa_mode;		// 0:inactive 1:during X68Sound_Start 2:during X68Sound_PcmStart
 
 	int OpmChMask;		// Channel Mask
 
@@ -270,7 +270,7 @@ inline void Opm::CalcCmndRate() {
 }
 
 inline void Opm::Reset() {
-	NumCmnd = 0;	// OPMコマンドバッファをクリア
+	NumCmnd = 0;	// Clear OPM command buffer
 	CmndReadIdx = CmndWriteIdx = 0;
 
 	CalcCmndRate();
@@ -1024,17 +1024,17 @@ inline void Opm::pcmset62(int ndata) {
 					}
 				}
 
-				// OutInpAdpcm[] に Pcm8 の出力PCMを加算（パンニング＆飽和演算対応）
+				// Add Pcm8 output PCM to OutInpAdpcm[] (panning & saturation arithmetic support)
 				{
 					int ch;
 					for (ch=0; ch<PCM8_NCH; ++ch) {
-						if (OpmChMask & (0x100 << ch)) continue;  // マスクされたチャンネルはスキップ
+						if (OpmChMask & (0x100 << ch)) continue;  // Skip masked channels
 
 						int pan = pcm8[ch].GetMode();
 						int o = pcm8[ch].GetPcm62();
 
 						if (o != 0x80000000) {
-							// パンニング処理（ビットマスク演算を条件分岐に変更）
+							// Panning processing (bitmask operation changed to conditional branching)
 							if (pan & PAN_LEFT) {
 								OutInpAdpcm[0] = saturate_add_pcm(OutInpAdpcm[0], o);
 							}
@@ -1308,17 +1308,17 @@ inline void Opm::pcmset22(int ndata) {
 						}
 					}
 
-					// OutInpAdpcm[] に Pcm8 の出力PCMを加算（パンニング＆飽和演算対応）
+					// Add Pcm8 output PCM to OutInpAdpcm[] (panning & saturation arithmetic support)
 					{
 						int ch;
 						for (ch=0; ch<PCM8_NCH; ++ch) {
-							if (OpmChMask & (0x100 << ch)) continue;  // マスクされたチャンネルはスキップ
+							if (OpmChMask & (0x100 << ch)) continue;  // Skip masked channels
 
 							int pan = pcm8[ch].GetMode();
 							int o = pcm8[ch].GetPcm();
 
 							if (o != 0x80000000) {
-								// パンニング処理（ビットマスク演算を条件分岐に変更）
+								// Panning processing (bitmask operation changed to conditional branching)
 								if (pan & PAN_LEFT) {
 									OutInpAdpcm[0] = saturate_add_pcm(OutInpAdpcm[0], o);
 								}
