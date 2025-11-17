@@ -350,6 +350,23 @@ const int PCM8VOLTBL[16] = {
 
 #define	PCM8_NCH	8
 
+// PCM8ミキシング関連定数
+#define PCM8_MAX_VOLUME_SUM		(32767 << 4)
+#define PCM8_MIN_VOLUME_SUM		(-32768 << 4)
+
+// HPFフィルター係数
+#define HPF_COEFF_A1_22KHZ		459		// 22kHz用フィルター係数 (512 - 53)
+#define HPF_SHIFT				9		// フィルターシフト量
+
+// パンニング定数
+#define PAN_LEFT				0x01	// 左チャンネル有効
+#define PAN_RIGHT				0x02	// 右チャンネル有効
+#define PAN_STEREO				0x03	// ステレオ（両チャンネル）
+
+// オーディオバッファサイズ定数
+#define LATE_SAMPLES_MIN		50		// 最小レイテンシサンプル数
+#define BETW_SAMPLES_MIN		1		// 最小Between サンプル数
+
 
 unsigned char *bswapl(unsigned char *adrs) {
 	return (unsigned char*)_byteswap_ulong((unsigned long)adrs);
@@ -368,6 +385,17 @@ unsigned int irnd(void) {
 	static unsigned int seed = 1;
 	seed = seed * 1566083941UL + 1;
 	return seed;
+}
+
+// 飽和演算（オーバーフロー対策）
+inline int saturate_add_pcm(int accumulator, int value) {
+	int64_t result = (int64_t)accumulator + (int64_t)value;
+	if (result > PCM8_MAX_VOLUME_SUM) {
+		return PCM8_MAX_VOLUME_SUM;
+	} else if (result < PCM8_MIN_VOLUME_SUM) {
+		return PCM8_MIN_VOLUME_SUM;
+	}
+	return (int)result;
 }
 
 

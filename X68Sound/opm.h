@@ -1030,18 +1030,23 @@ inline void Opm::pcmset62(int ndata) {
 					}
 				}
 
-				// OutInpAdpcm[] �� Pcm8 �̏o��PCM�����Z
+				// OutInpAdpcm[] に Pcm8 の出力PCMを加算（パンニング＆飽和演算対応）
 				{
 					int ch;
 					for (ch=0; ch<PCM8_NCH; ++ch) {
-						int pan;
-						pan = pcm8[ch].GetMode();
-						int	o;
-						o = pcm8[ch].GetPcm62();
-						if (!(OpmChMask & (0x100 << ch)))
+						if (OpmChMask & (0x100 << ch)) continue;  // マスクされたチャンネルはスキップ
+
+						int pan = pcm8[ch].GetMode();
+						int o = pcm8[ch].GetPcm62();
+
 						if (o != 0x80000000) {
-								OutInpAdpcm[0] += (-(pan&1)) & o;
-								OutInpAdpcm[1] += (-((pan>>1)&1)) & o;
+							// パンニング処理（ビットマスク演算を条件分岐に変更）
+							if (pan & PAN_LEFT) {
+								OutInpAdpcm[0] = saturate_add_pcm(OutInpAdpcm[0], o);
+							}
+							if (pan & PAN_RIGHT) {
+								OutInpAdpcm[1] = saturate_add_pcm(OutInpAdpcm[1], o);
+							}
 						}
 					}
 				}
@@ -1309,18 +1314,23 @@ inline void Opm::pcmset22(int ndata) {
 						}
 					}
 
-					// OutInpAdpcm[] �� Pcm8 �̏o��PCM�����Z
+					// OutInpAdpcm[] に Pcm8 の出力PCMを加算（パンニング＆飽和演算対応）
 					{
 						int ch;
 						for (ch=0; ch<PCM8_NCH; ++ch) {
-							int pan;
-							pan = pcm8[ch].GetMode();
-							int	o;
-							o = pcm8[ch].GetPcm();
-							if (!(OpmChMask & (0x100 << ch)))
+							if (OpmChMask & (0x100 << ch)) continue;  // マスクされたチャンネルはスキップ
+
+							int pan = pcm8[ch].GetMode();
+							int o = pcm8[ch].GetPcm();
+
 							if (o != 0x80000000) {
-								OutInpAdpcm[0] += (-(pan&1)) & o;
-								OutInpAdpcm[1] += (-((pan>>1)&1)) & o;
+								// パンニング処理（ビットマスク演算を条件分岐に変更）
+								if (pan & PAN_LEFT) {
+									OutInpAdpcm[0] = saturate_add_pcm(OutInpAdpcm[0], o);
+								}
+								if (pan & PAN_RIGHT) {
+									OutInpAdpcm[1] = saturate_add_pcm(OutInpAdpcm[1], o);
+								}
 							}
 						}
 					}

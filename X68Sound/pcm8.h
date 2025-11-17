@@ -1,17 +1,17 @@
 class Pcm8 {
 	int	Scale;		// 
 	int Pcm;		// 16bit PCM Data
-	int Pcm16Prev;	// 16bit,8bitPCM‚Ì1‚Â‘O‚Ìƒf[ƒ^
-	int InpPcm,InpPcm_prev,OutPcm;		// HPF—p 16bit PCM Data
-	int OutInpPcm,OutInpPcm_prev;		// HPF—p
+	int Pcm16Prev;	// 16bit,8bitPCMï¿½ï¿½1ï¿½Â‘Oï¿½Ìƒfï¿½[ï¿½^
+	int InpPcm,InpPcm_prev,OutPcm;		// HPFï¿½p 16bit PCM Data
+	int OutInpPcm,OutInpPcm_prev;		// HPFï¿½p
 	int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
-	int	N1Data;	// ADPCM 1ƒTƒ“ƒvƒ‹‚Ìƒf[ƒ^‚Ì•Û‘¶
+	int	N1Data;	// ADPCM 1ï¿½Tï¿½ï¿½ï¿½vï¿½ï¿½ï¿½Ìƒfï¿½[ï¿½^ï¿½Ì•Û‘ï¿½
 	int N1DataFlag;	// 0 or 1
 
 	volatile int	Mode;
 	volatile int	Volume;	// x/16
-	volatile int	PcmKind;	// 0`4:ADPCM  5:16bitPCM  6:8bitPCM  7:“ä
+	volatile int	PcmKind;	// 0ï¿½`4:ADPCM  5:16bitPCM  6:8bitPCM  7:ï¿½ï¿½
 
 	inline void adpcm2pcm(unsigned char adpcm);
 	inline void	pcm16_2pcm(int pcm16);
@@ -25,7 +25,7 @@ public:
 	volatile unsigned int DmaMtc;
 	volatile unsigned char *DmaBar;
 	volatile unsigned int DmaBtc;
-	volatile int	DmaOcr;				// 0:ƒ`ƒFƒCƒ““®ì‚È‚µ 0x08:ƒAƒŒƒCƒ`ƒFƒCƒ“ 0x0C:ƒŠƒ“ƒNƒAƒŒƒCƒ`ƒFƒCƒ“
+	volatile int	DmaOcr;				// 0:ï¿½`ï¿½Fï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½ 0x08:ï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½ 0x0C:ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 
 
 	inline int DmaArrayChainSetNextMtcMar();
@@ -58,7 +58,7 @@ Pcm8::Pcm8(void) {
 
 
 inline void Pcm8::Init() {
-	AdpcmReg = 0xC7;	// ADPCM“®ì’â~
+	AdpcmReg = 0xC7;	// ADPCMï¿½ï¿½ï¿½ï¿½ï¿½~
 
 	Scale = 0;
 	Pcm = 0;
@@ -80,7 +80,7 @@ inline void Pcm8::Init() {
 inline void Pcm8::InitSamprate() {
 	RateCounter = 0;
 }
-inline void Pcm8::Reset() {		// ADPCM ƒL[ƒIƒ“‚Ìˆ—
+inline void Pcm8::Reset() {		// ADPCM ï¿½Lï¿½[ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
 	Scale = 0;
 	Pcm = 0;
 	Pcm16Prev = 0;
@@ -108,14 +108,14 @@ inline int Pcm8::DmaArrayChainSetNextMtcMar() {
 	mem4 = MemRead((unsigned char *)DmaBar++);
 	mem5 = MemRead((unsigned char *)DmaBar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5) == -1) {
-		// ƒoƒXƒGƒ‰[(ƒx[ƒXƒAƒhƒŒƒX/ƒx[ƒXƒJƒEƒ“ƒ^)
+		// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½xï¿½[ï¿½Xï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½xï¿½[ï¿½Xï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	} 
 	DmaMar = (volatile unsigned char *)((mem0<<24)|(mem1<<16)|(mem2<<8)|(mem3));	// MAR
 	DmaMtc = (mem4<<8)|(mem5);	// MTC
 
 	if ( DmaMtc == 0 ) {	// MTC == 0 ?
-		// ƒJƒEƒ“ƒgƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+		// ï¿½Jï¿½Eï¿½ï¿½ï¿½gï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	return 0;
@@ -138,7 +138,7 @@ inline int Pcm8::DmaLinkArrayChainSetNextMtcMar() {
 	mem8 = MemRead((unsigned char *)DmaBar++);
 	mem9 = MemRead((unsigned char *)DmaBar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5|mem6|mem7|mem8|mem9) == -1) {
-		// ƒoƒXƒGƒ‰[(ƒx[ƒXƒAƒhƒŒƒX/ƒx[ƒXƒJƒEƒ“ƒ^)
+		// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½xï¿½[ï¿½Xï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½xï¿½[ï¿½Xï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	DmaMar = (volatile unsigned char *)((mem0<<24)|(mem1<<16)|(mem2<<8)|(mem3));	// MAR
@@ -146,7 +146,7 @@ inline int Pcm8::DmaLinkArrayChainSetNextMtcMar() {
 	DmaBar = (volatile unsigned char *)((mem6<<24)|(mem7<<16)|(mem8<<8)|(mem9));	// BAR
 
 	if ( DmaMtc == 0 ) {	// MTC == 0 ?
-		// ƒJƒEƒ“ƒgƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+		// ï¿½Jï¿½Eï¿½ï¿½ï¿½gï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	return 0;
@@ -160,7 +160,7 @@ inline int	Pcm8::DmaGetByte() {
 		int mem;
 		mem = MemRead((unsigned char *)DmaMar);
 		if (mem == -1) {
-			// ƒoƒXƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+			// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 			return 0x80000000;
 		}
 		DmaLastValue = mem;
@@ -171,12 +171,12 @@ inline int	Pcm8::DmaGetByte() {
 
 	try {
 	if (DmaMtc == 0) {
-		if (DmaOcr & 0x08) {	// ƒ`ƒFƒCƒjƒ“ƒO“®ì
-			if (!(DmaOcr & 0x04)) {	// ƒAƒŒƒCƒ`ƒFƒCƒ“
+		if (DmaOcr & 0x08) {	// ï¿½`ï¿½Fï¿½Cï¿½jï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½
+			if (!(DmaOcr & 0x04)) {	// ï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 				if (DmaArrayChainSetNextMtcMar()) {
 					throw "";
 				}
-			} else {						// ƒŠƒ“ƒNƒAƒŒƒCƒ`ƒFƒCƒ“
+			} else {						// ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 				if (DmaLinkArrayChainSetNextMtcMar()) {
 					throw "";
 				}
@@ -200,7 +200,7 @@ inline int	Pcm8::DmaGetByte() {
 static int	HPF_shift_tbl[16+1]={ 0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4,};
 	
 
-// adpcm‚ğ“ü—Í‚µ‚Ä InpPcm ‚Ì’l‚ğ•Ï‰»‚³‚¹‚é
+// adpcmï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½ï¿½ InpPcm ï¿½Ì’lï¿½ï¿½Ï‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 // -2047<<(4+4) <= InpPcm <= +2047<<(4+4)
 inline void	Pcm8::adpcm2pcm(unsigned char adpcm) {
 
@@ -233,7 +233,7 @@ inline void	Pcm8::adpcm2pcm(unsigned char adpcm) {
 	}
 }
 
-// pcm16‚ğ“ü—Í‚µ‚Ä InpPcm ‚Ì’l‚ğ•Ï‰»‚³‚¹‚é
+// pcm16ï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½ï¿½ InpPcm ï¿½Ì’lï¿½ï¿½Ï‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 // -2047<<(4+4) <= InpPcm <= +2047<<(4+4)
 inline void	Pcm8::pcm16_2pcm(int pcm16) {
 	Pcm += pcm16-Pcm16Prev;
@@ -253,7 +253,7 @@ inline void	Pcm8::pcm16_2pcm(int pcm16) {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Pcm8::GetPcm() {
-	if (AdpcmReg & 0x80) {		// ADPCM ’â~’†
+	if (AdpcmReg & 0x80) {		// ADPCM ï¿½ï¿½~ï¿½ï¿½
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
@@ -263,45 +263,46 @@ inline int Pcm8::GetPcm() {
 			dataH = DmaGetByte();
 			if (dataH == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
 			dataL = DmaGetByte();
 			if (dataL == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
-			pcm16_2pcm((int)(short)((dataH<<8)|dataL));	// OutPcm ‚É’l‚ª“ü‚é
+			pcm16_2pcm((int)(short)((dataH<<8)|dataL));	// OutPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		} else if (PcmKind == 6) {	// 8bitPCM
 			int data;
 			data = DmaGetByte();
 			if (data == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
-			pcm16_2pcm((int)(char)data);	// InpPcm ‚É’l‚ª“ü‚é
+			pcm16_2pcm((int)(char)data);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		} else {
-			if (N1DataFlag == 0) {		// Ÿ‚ÌADPCMƒf[ƒ^‚ª“à•”‚É‚È‚¢ê‡
+			if (N1DataFlag == 0) {		// ï¿½ï¿½ï¿½ï¿½ADPCMï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚È‚ï¿½ï¿½ê‡
 				int	N10Data;	// (N1Data << 4) | N0Data
-				N10Data = DmaGetByte();	// DMA“]‘—(1ƒoƒCƒg)
+				N10Data = DmaGetByte();	// DMAï¿½]ï¿½ï¿½(1ï¿½oï¿½Cï¿½g)
 				if (N10Data == 0x80000000) {
 					RateCounter = 0;
-					AdpcmReg = 0xC7;	// ADPCM ’â~
+					AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 					return 0x80000000;
 				}
-				adpcm2pcm(N10Data & 0x0F);	// InpPcm ‚É’l‚ª“ü‚é
+				adpcm2pcm(N10Data & 0x0F);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				N1Data = (N10Data >> 4) & 0x0F;
 				N1DataFlag = 1;
 			} else {
-				adpcm2pcm(N1Data);			// InpPcm ‚É’l‚ª“ü‚é
+				adpcm2pcm(N1Data);			// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				N1DataFlag = 0;
 			}
 		}
 		RateCounter += 15625*12;
 	}
-	OutPcm = ((InpPcm<<9) - (InpPcm_prev<<9) + 459*OutPcm) >> 9;
+	// HPFãƒ•ã‚£ãƒ«ã‚¿ãƒ¼é©ç”¨ï¼ˆãƒã‚¸ãƒƒã‚¯ãƒŠãƒ³ãƒãƒ¼ã‚’å®šæ•°åŒ–ï¼‰
+	OutPcm = ((InpPcm << HPF_SHIFT) - (InpPcm_prev << HPF_SHIFT) + HPF_COEFF_A1_22KHZ * OutPcm) >> HPF_SHIFT;
 	InpPcm_prev = InpPcm;
 
 	return (((OutPcm*Volume)>>4)*TotalVolume)>>8;
@@ -309,7 +310,7 @@ inline int Pcm8::GetPcm() {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Pcm8::GetPcm62() {
-	if (AdpcmReg & 0x80) {		// ADPCM ’â~’†
+	if (AdpcmReg & 0x80) {		// ADPCM ï¿½ï¿½~ï¿½ï¿½
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
@@ -319,39 +320,39 @@ inline int Pcm8::GetPcm62() {
 			dataH = DmaGetByte();
 			if (dataH == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
 			dataL = DmaGetByte();
 			if (dataL == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
-			pcm16_2pcm((int)(short)((dataH<<8)|dataL));	// OutPcm ‚É’l‚ª“ü‚é
+			pcm16_2pcm((int)(short)((dataH<<8)|dataL));	// OutPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		} else if (PcmKind == 6) {	// 8bitPCM
 			int data;
 			data = DmaGetByte();
 			if (data == 0x80000000) {
 				RateCounter = 0;
-				AdpcmReg = 0xC7;	// ADPCM ’â~
+				AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 				return 0x80000000;
 			}
-			pcm16_2pcm((int)(char)data);	// InpPcm ‚É’l‚ª“ü‚é
+			pcm16_2pcm((int)(char)data);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		} else {
-			if (N1DataFlag == 0) {		// Ÿ‚ÌADPCMƒf[ƒ^‚ª“à•”‚É‚È‚¢ê‡
+			if (N1DataFlag == 0) {		// ï¿½ï¿½ï¿½ï¿½ADPCMï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚È‚ï¿½ï¿½ê‡
 				int	N10Data;	// (N1Data << 4) | N0Data
-				N10Data = DmaGetByte();	// DMA“]‘—(1ƒoƒCƒg)
+				N10Data = DmaGetByte();	// DMAï¿½]ï¿½ï¿½(1ï¿½oï¿½Cï¿½g)
 				if (N10Data == 0x80000000) {
 					RateCounter = 0;
-					AdpcmReg = 0xC7;	// ADPCM ’â~
+					AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 					return 0x80000000;
 				}
-				adpcm2pcm(N10Data & 0x0F);	// InpPcm ‚É’l‚ª“ü‚é
+				adpcm2pcm(N10Data & 0x0F);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				N1Data = (N10Data >> 4) & 0x0F;
 				N1DataFlag = 1;
 			} else {
-				adpcm2pcm(N1Data);			// InpPcm ‚É’l‚ª“ü‚é
+				adpcm2pcm(N1Data);			// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				N1DataFlag = 0;
 			}
 		}
@@ -379,15 +380,15 @@ inline int	Pcm8::Out(void *adrs, int mode, int len) {
 			return 0;
 		}
 	}
-	AdpcmReg = 0xC7;	// ADPCM ’â~
+	AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 	DmaMtc = 0;
 	DmaMar = (unsigned char *)adrs;
 	SetMode(mode);
 	if ((mode&3) != 0) {
 		DmaMtc = len;
 		Reset();
-		AdpcmReg = 0x47;	// ADPCM “®ìŠJn
-		DmaOcr = 0;			// ƒ`ƒFƒCƒ““®ì‚È‚µ
+		AdpcmReg = 0x47;	// ADPCM ï¿½ï¿½ï¿½ï¿½Jï¿½n
+		DmaOcr = 0;			// ï¿½`ï¿½Fï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½
 	}
 	return 0;
 }
@@ -400,7 +401,7 @@ inline int	Pcm8::Aot(void *tbl, int mode, int cnt) {
 			return 0;
 		}
 	}
-	AdpcmReg = 0xC7;	// ADPCM ’â~
+	AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 	DmaMtc = 0;
 	DmaBar = (unsigned char *)tbl;
 	DmaBtc = cnt;
@@ -408,21 +409,21 @@ inline int	Pcm8::Aot(void *tbl, int mode, int cnt) {
 	if ((mode&3) != 0) {
 		DmaArrayChainSetNextMtcMar();
 		Reset();
-		AdpcmReg = 0x47;	// ADPCM “®ìŠJn
-		DmaOcr = 0x08;		// ƒAƒŒƒCƒ`ƒFƒCƒ“
+		AdpcmReg = 0x47;	// ADPCM ï¿½ï¿½ï¿½ï¿½Jï¿½n
+		DmaOcr = 0x08;		// ï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 	}
 	return 0;
 }
 inline int	Pcm8::Lot(void *tbl, int mode) {
-	AdpcmReg = 0xC7;	// ADPCM ’â~
+	AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 	DmaMtc = 0;
 	DmaBar = (unsigned char *)tbl;
 	SetMode(mode);
 	if ((mode&3) != 0) {
 		DmaLinkArrayChainSetNextMtcMar();
 		Reset();
-		AdpcmReg = 0x47;	// ADPCM “®ìŠJn
-		DmaOcr = 0x0c;		// ƒŠƒ“ƒNƒAƒŒƒCƒ`ƒFƒCƒ“
+		AdpcmReg = 0x47;	// ADPCM ï¿½ï¿½ï¿½ï¿½Jï¿½n
+		DmaOcr = 0x0c;		// ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 	}
 	return 0;
 }
@@ -446,7 +447,7 @@ inline int	Pcm8::SetMode(int mode) {
 	if (m != 0xFF) {
 		m &= 3;
 		if (m == 0) {
-			AdpcmReg = 0xC7;	// ADPCM ’â~
+			AdpcmReg = 0xC7;	// ADPCM ï¿½ï¿½~
 			DmaMtc = 0;
 		} else {
 			Mode = (Mode&0xFFFFFF00)|(m);
@@ -459,10 +460,10 @@ inline int	Pcm8::GetRest() {
 	if (DmaMtc == 0) {
 		return 0;
 	}
-	if (DmaOcr & 0x08) {	// ƒ`ƒFƒCƒjƒ“ƒO“®ì
-		if (!(DmaOcr & 0x04)) {	// ƒAƒŒƒCƒ`ƒFƒCƒ“
+	if (DmaOcr & 0x08) {	// ï¿½`ï¿½Fï¿½Cï¿½jï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½
+		if (!(DmaOcr & 0x04)) {	// ï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 			return -1;
-		} else {						// ƒŠƒ“ƒNƒAƒŒƒCƒ`ƒFƒCƒ“
+		} else {						// ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 			return -2;
 		}
 	}

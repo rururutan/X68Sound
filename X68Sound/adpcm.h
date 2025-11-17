@@ -1,23 +1,23 @@
 class Adpcm {
 	int	Scale;		// 
 	int Pcm;		// 16bit PCM Data
-	int InpPcm,InpPcm_prev,OutPcm;		// HPF—p 16bit PCM Data
-	int OutInpPcm,OutInpPcm_prev;		// HPF—p
+	int InpPcm,InpPcm_prev,OutPcm;		// HPFï¿½p 16bit PCM Data
+	int OutInpPcm,OutInpPcm_prev;		// HPFï¿½p
 	volatile int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
-	int	N1Data;	// ADPCM 1ƒTƒ“ƒvƒ‹‚Ìƒf[ƒ^‚Ì•Û‘¶
+	int	N1Data;	// ADPCM 1ï¿½Tï¿½ï¿½ï¿½vï¿½ï¿½ï¿½Ìƒfï¿½[ï¿½^ï¿½Ì•Û‘ï¿½
 	int N1DataFlag;	// 0 or 1
 
 	inline void adpcm2pcm(unsigned char adpcm);
 
 public:
-	void (CALLBACK *IntProc)();	// Š„‚è‚İƒAƒhƒŒƒX
-	void (CALLBACK *ErrIntProc)();	// Š„‚è‚İƒAƒhƒŒƒX
-//	int	AdpcmFlag;	// 0:”ñ“®ì  1:Ä¶’†
-//	int PpiReg;		// PPI ƒŒƒWƒXƒ^‚Ì“à—e
-//	int	DmaCsr;		// DMA CSR ƒŒƒWƒXƒ^‚Ì“à—e
-//	int	DmaCcr;		// DMA CCR ƒŒƒWƒXƒ^‚Ì“à—e
-//	int	DmaFlag;	// 0:DMA”ñ“®ì  1:DMA“®ì’†
+	void (CALLBACK *IntProc)();	// ï¿½ï¿½ï¿½èï¿½İƒAï¿½hï¿½ï¿½ï¿½X
+	void (CALLBACK *ErrIntProc)();	// ï¿½ï¿½ï¿½èï¿½İƒAï¿½hï¿½ï¿½ï¿½X
+//	int	AdpcmFlag;	// 0:ï¿½ñ“®ï¿½  1:ï¿½Äï¿½ï¿½ï¿½
+//	int PpiReg;		// PPI ï¿½ï¿½ï¿½Wï¿½Xï¿½^ï¿½Ì“ï¿½ï¿½e
+//	int	DmaCsr;		// DMA CSR ï¿½ï¿½ï¿½Wï¿½Xï¿½^ï¿½Ì“ï¿½ï¿½e
+//	int	DmaCcr;		// DMA CCR ï¿½ï¿½ï¿½Wï¿½Xï¿½^ï¿½Ì“ï¿½ï¿½e
+//	int	DmaFlag;	// 0:DMAï¿½ñ“®ï¿½  1:DMAï¿½ï¿½ï¿½ì’†
 	inline int	DmaGetByte();
 	unsigned char	DmaLastValue;
 	volatile unsigned char	AdpcmReg;
@@ -108,7 +108,7 @@ inline void Adpcm::Init() {
 inline void Adpcm::InitSamprate() {
 	RateCounter = 0;
 }
-inline void Adpcm::Reset() {	// ADPCM ƒL[ƒIƒ“‚Ìˆ—
+inline void Adpcm::Reset() {	// ADPCM ï¿½Lï¿½[ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
 
 	Scale = 0;
 
@@ -149,7 +149,7 @@ inline int Adpcm::DmaContinueSetNextMtcMar() {
 	*(unsigned int *)&DmaReg[0x0C] = *(unsigned int *)&DmaReg[0x1C];	// BAR -> MAR
 	DmaReg[0x29] = DmaReg[0x39];	// BFC -> MFC
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);	// ƒJƒEƒ“ƒgƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+		DmaError(0x0D);	// ï¿½Jï¿½Eï¿½ï¿½ï¿½gï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	DmaReg[0x00] |= 0x40;		// BTC=1
@@ -181,7 +181,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	mem4 = MemRead(Bar++);
 	mem5 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5) == -1) {
-		DmaError(0x0B);		// ƒoƒXƒGƒ‰[(ƒx[ƒXƒAƒhƒŒƒX/ƒx[ƒXƒJƒEƒ“ƒ^)
+		DmaError(0x0B);		// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½xï¿½[ï¿½Xï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½xï¿½[ï¿½Xï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -193,7 +193,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	DmaReg[0x0B] = mem5;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);		// ƒJƒEƒ“ƒgƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+		DmaError(0x0D);		// ï¿½Jï¿½Eï¿½ï¿½ï¿½gï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	return 0;
@@ -220,7 +220,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	mem8 = MemRead(Bar++);
 	mem9 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5|mem6|mem7|mem8|mem9) == -1) {
-		DmaError(0x0B);		// ƒoƒXƒGƒ‰[(ƒx[ƒXƒAƒhƒŒƒX/ƒx[ƒXƒJƒEƒ“ƒ^)
+		DmaError(0x0B);		// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½xï¿½[ï¿½Xï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½xï¿½[ï¿½Xï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -236,7 +236,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	DmaReg[0x1F] = mem9;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);		// ƒJƒEƒ“ƒgƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+		DmaError(0x0D);		// ï¿½Jï¿½Eï¿½ï¿½ï¿½gï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 		return 1;
 	}
 	return 0;
@@ -251,7 +251,7 @@ inline int	Adpcm::DmaGetByte() {
 	unsigned short	Mtc;
 	Mtc = bswapw(*(unsigned short *)&DmaReg[0x0A]);
 	if (Mtc == 0) {
-//		if (DmaReg[0x07] & 0x40) {	// Continue“®ì
+//		if (DmaReg[0x07] & 0x40) {	// Continueï¿½ï¿½ï¿½ï¿½
 //			if (DmaContinueSetNextMtcMar()) {
 //				return 0x80000000;
 //			}
@@ -268,7 +268,7 @@ inline int	Adpcm::DmaGetByte() {
 		int mem;
 		mem = MemRead(Mar);
 		if (mem == -1) {
-			DmaError(0x09);	// ƒoƒXƒGƒ‰[(ƒƒ‚ƒŠƒAƒhƒŒƒX/ƒƒ‚ƒŠƒJƒEƒ“ƒ^)
+			DmaError(0x09);	// ï¿½oï¿½Xï¿½Gï¿½ï¿½ï¿½[(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½X/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½Eï¿½ï¿½ï¿½^)
 			return 0x80000000;
 		}
 		DmaLastValue = mem;
@@ -281,21 +281,21 @@ inline int	Adpcm::DmaGetByte() {
 
 	try {
 	if (Mtc == 0) {
-		if (DmaReg[0x07] & 0x40) {	// Continue“®ì
+		if (DmaReg[0x07] & 0x40) {	// Continueï¿½ï¿½ï¿½ï¿½
 			if (DmaContinueSetNextMtcMar()) {
 				throw "";
 			}
-		} else if (DmaReg[0x05] & 0x08) {	// ƒ`ƒFƒCƒjƒ“ƒO“®ì
-			if (!(DmaReg[0x05] & 0x04)) {	// ƒAƒŒƒCƒ`ƒFƒCƒ“
+		} else if (DmaReg[0x05] & 0x08) {	// ï¿½`ï¿½Fï¿½Cï¿½jï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½ï¿½
+			if (!(DmaReg[0x05] & 0x04)) {	// ï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 				if (DmaArrayChainSetNextMtcMar()) {
 					throw "";
 				}
-			} else {						// ƒŠƒ“ƒNƒAƒŒƒCƒ`ƒFƒCƒ“
+			} else {						// ï¿½ï¿½ï¿½ï¿½ï¿½Nï¿½Aï¿½ï¿½ï¿½Cï¿½`ï¿½Fï¿½Cï¿½ï¿½
 				if (DmaLinkArrayChainSetNextMtcMar()) {
 					throw "";
 				}
 			}
-		} else {	// ƒm[ƒ}ƒ‹“]‘—I—¹
+		} else {	// ï¿½mï¿½[ï¿½}ï¿½ï¿½ï¿½]ï¿½ï¿½ï¿½Iï¿½ï¿½
 //			if (!(DmaReg[0x00] & 0x40)) {		// BTC=1 ?
 //				if (DmaContinueSetNextMtcMar()) {
 //					throw "";
@@ -321,7 +321,7 @@ inline int	Adpcm::DmaGetByte() {
 
 #define	MAXPCMVAL	(2047)
 
-// adpcm‚ğ“ü—Í‚µ‚Ä InpPcm ‚Ì’l‚ğ•Ï‰»‚³‚¹‚é
+// adpcmï¿½ï¿½ï¿½ï¿½Í‚ï¿½ï¿½ï¿½ InpPcm ï¿½Ì’lï¿½ï¿½Ï‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 // -2047<<(4+4) <= InpPcm <= +2047<<(4+4)
 inline void	Adpcm::adpcm2pcm(unsigned char adpcm) {
 
@@ -356,28 +356,29 @@ inline void	Adpcm::adpcm2pcm(unsigned char adpcm) {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm() {
-	if (AdpcmReg & 0x80) {		// ADPCM ’â~’†
+	if (AdpcmReg & 0x80) {		// ADPCM ï¿½ï¿½~ï¿½ï¿½
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0) {		// Ÿ‚ÌADPCMƒf[ƒ^‚ª“à•”‚É‚È‚¢ê‡
+		if (N1DataFlag == 0) {		// ï¿½ï¿½ï¿½ï¿½ADPCMï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚È‚ï¿½ï¿½ê‡
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA“]‘—(1ƒoƒCƒg)
+			N10Data = DmaGetByte();	// DMAï¿½]ï¿½ï¿½(1ï¿½oï¿½Cï¿½g)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm ‚É’l‚ª“ü‚é
+			adpcm2pcm(N10Data & 0x0F);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm ‚É’l‚ª“ü‚é
+			adpcm2pcm(N1Data);			// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12;
 	}
-	OutPcm = ((InpPcm<<9) - (InpPcm_prev<<9) + 459*OutPcm) >> 9;
+	// HPFãƒ•ã‚£ãƒ«ã‚¿ãƒ¼é©ç”¨ï¼ˆãƒã‚¸ãƒƒã‚¯ãƒŠãƒ³ãƒãƒ¼ã‚’å®šæ•°åŒ–ï¼‰
+	OutPcm = ((InpPcm << HPF_SHIFT) - (InpPcm_prev << HPF_SHIFT) + HPF_COEFF_A1_22KHZ * OutPcm) >> HPF_SHIFT;
 	InpPcm_prev = InpPcm;
 
 	return (OutPcm*TotalVolume)>>8;
@@ -385,23 +386,23 @@ inline int Adpcm::GetPcm() {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm62() {
-	if (AdpcmReg & 0x80) {		// ADPCM ’â~’†
+	if (AdpcmReg & 0x80) {		// ADPCM ï¿½ï¿½~ï¿½ï¿½
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0) {		// Ÿ‚ÌADPCMƒf[ƒ^‚ª“à•”‚É‚È‚¢ê‡
+		if (N1DataFlag == 0) {		// ï¿½ï¿½ï¿½ï¿½ADPCMï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚È‚ï¿½ï¿½ê‡
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA“]‘—(1ƒoƒCƒg)
+			N10Data = DmaGetByte();	// DMAï¿½]ï¿½ï¿½(1ï¿½oï¿½Cï¿½g)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm ‚É’l‚ª“ü‚é
+			adpcm2pcm(N10Data & 0x0F);	// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm ‚É’l‚ª“ü‚é
+			adpcm2pcm(N1Data);			// InpPcm ï¿½É’lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12*4;
