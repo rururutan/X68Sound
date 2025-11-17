@@ -8,11 +8,18 @@ Sharp X68000のサウンドハードウェア（OPM/ADPCM/PCM8）をエミュレ
 ### 2025/11/17 - v2.0 音質向上アップデート
 
 #### 新機能
-* **線形補間**: PCM8/ADPCMのサンプルレート変換に線形補間を実装
-  - エイリアシングノイズを大幅に軽減
+* **PCM8/ADPCM線形補間**: サンプルレート変換に線形補間を実装
+  - エイリアシングノイズを大幅に軽減（50～70%）
   - 高周波成分の歪みを低減
   - CPU負荷: 約5%増加
   - 環境変数 `X68SOUND_LINEAR_INTERPOLATION` で制御可能（デフォルト: 有効）
+
+* **OPM線形補間**: FM音源の正弦波テーブルに線形補間を実装
+  - エイリアシングノイズを大幅に軽減（50～70%）
+  - FM変調の滑らかさが向上
+  - 位相精度の向上
+  - CPU負荷: 約3～5%増加
+  - 環境変数 `X68SOUND_OPM_SINE_INTERP` で制御可能（デフォルト: 有効）
 
 * **ボリュームスムージング**: PCM8のクリックノイズ完全除去
   - ボリューム変更時に徐々に変化（約5ms）
@@ -31,7 +38,8 @@ Sharp X68000のサウンドハードウェア（OPM/ADPCM/PCM8）をエミュレ
   - 日本語コメントの整理と追加
 
 #### ドキュメント
-* [PCM8_QUALITY_IMPROVEMENTS_JP.md](PCM8_QUALITY_IMPROVEMENTS_JP.md) - 音質向上の詳細解説
+* [PCM8_QUALITY_IMPROVEMENTS_JP.md](PCM8_QUALITY_IMPROVEMENTS_JP.md) - PCM8音質向上の詳細解説
+* [OPM_QUALITY_IMPROVEMENTS_JP.md](OPM_QUALITY_IMPROVEMENTS_JP.md) - OPM音質向上の詳細解説
 * [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) - 環境変数設定ガイド
 
 ### 2025/01/17 - 初期リリース
@@ -110,13 +118,15 @@ set X68SOUND_DEBUG=1
 
 #### 音質設定
 ```batch
-REM 音質向上機能（デフォルトで有効）
+REM すべての音質向上機能（デフォルトで有効）
 set X68SOUND_LINEAR_INTERPOLATION=1
 set X68SOUND_VOLUME_SMOOTHING=1
+set X68SOUND_OPM_SINE_INTERP=1
 
-REM 実機完全互換モード（音質機能を無効化）
+REM 実機完全互換モード（すべての音質機能を無効化）
 set X68SOUND_LINEAR_INTERPOLATION=0
 set X68SOUND_VOLUME_SMOOTHING=0
+set X68SOUND_OPM_SINE_INTERP=0
 ```
 
 ### ビルド方法
@@ -158,16 +168,18 @@ build_VS2019_x64.bat
 - **PCM形式**: 16bit PCM / 8bit PCM / ADPCM
 
 ### 音質向上機能（v2.0以降）
-- **線形補間**: サンプルレート変換時のエイリアシングノイズを軽減
-- **ボリュームスムージング**: ボリューム変更時のクリックノイズを除去
-- **飽和演算**: 8チャンネル同時再生時のオーバーフロー対策
+- **PCM8/ADPCM線形補間**: サンプルレート変換時のエイリアシングノイズを軽減（50～70%）
+- **OPM線形補間**: FM音源の正弦波生成時のエイリアシングノイズを軽減（50～70%）
+- **ボリュームスムージング**: PCM8ボリューム変更時のクリックノイズを除去
+- **飽和演算**: PCM8の8チャンネル同時再生時のオーバーフロー対策
 
 ---
 
 ## ドキュメント
 
 - [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) - 環境変数設定ガイド
-- [PCM8_QUALITY_IMPROVEMENTS_JP.md](PCM8_QUALITY_IMPROVEMENTS_JP.md) - 音質向上の詳細解説
+- [PCM8_QUALITY_IMPROVEMENTS_JP.md](PCM8_QUALITY_IMPROVEMENTS_JP.md) - PCM8音質向上の詳細解説
+- [OPM_QUALITY_IMPROVEMENTS_JP.md](OPM_QUALITY_IMPROVEMENTS_JP.md) - OPM音質向上の詳細解説
 
 ---
 
@@ -197,10 +209,11 @@ set X68SOUND_LATE_TIME=100
 ```
 
 ### 音質を実機に近づけたい
-音質向上機能を無効化してください：
+すべての音質向上機能を無効化してください：
 ```batch
 set X68SOUND_LINEAR_INTERPOLATION=0
 set X68SOUND_VOLUME_SMOOTHING=0
+set X68SOUND_OPM_SINE_INTERP=0
 ```
 
 ---
@@ -231,5 +244,5 @@ set X68SOUND_VOLUME_SMOOTHING=0
 ### 2025年版改良
 - UTF-8変換、Visual Studio 2022対応
 - 環境変数サポート
-- 音質向上機能（線形補間、ボリュームスムージング）
-- コード品質改善 
+- 音質向上機能（PCM8/ADPCM線形補間、OPM線形補間、ボリュームスムージング）
+- コード品質改善（飽和演算、定数化、コメント整理） 

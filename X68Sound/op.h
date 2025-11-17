@@ -522,8 +522,22 @@ inline void Op::Output0(int lfopitch, int lfolevel) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
 	}
-	int o = (Alpha)
-		* (int)(SINTBL[(((T+Out2Fb)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	// 正弦波テーブルの線形補間（OPM音質向上）
+	int phase_total = T + Out2Fb;
+	int sin_val;
+	if (g_Config.opm_sine_interpolation) {
+		int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+		int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+		int sin0 = SINTBL[phase_index];
+		int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+		sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+	} else {
+		sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+	}
+	int o = Alpha * sin_val;
 
 //	int o2 = (o+Inp_last) >> 1;
 //	Out2Fb = (o+o) >> Fl;
@@ -551,8 +565,22 @@ inline void Op::Output(int lfopitch, int lfolevel) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
 	}
-	int o = (Alpha)
-		* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	// 正弦波テーブルの線形補間（OPM音質向上）
+	int phase_total = T + inp;
+	int sin_val;
+	if (g_Config.opm_sine_interpolation) {
+		int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+		int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+		int sin0 = SINTBL[phase_index];
+		int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+		sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+	} else {
+		sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+	}
+	int o = Alpha * sin_val;
 
 	*out += o;
 };
@@ -572,8 +600,22 @@ inline void Op::Output32(int lfopitch, int lfolevel) {
 			Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 			LfoLevel = lfolevelame;
 		}
-		o = (Alpha)
-			* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+		// 正弦波テーブルの線形補間（OPM音質向上）
+		int phase_total = T + inp;
+		int sin_val;
+		if (g_Config.opm_sine_interpolation) {
+			int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+			int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+			int sin0 = SINTBL[phase_index];
+			int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+			sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+		} else {
+			sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+		}
+		o = Alpha * sin_val;
 	} else {
 		NoiseCounter -= NoiseStep;
 		if (NoiseCounter <= 0) {
@@ -606,8 +648,22 @@ inline void Op::Output0_22(int lfopitch, int lfolevel) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
 	}
-	int o = (Alpha)
-		* (int)(SINTBL[(((T+Out2Fb)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	// 正弦波テーブルの線形補間（OPM音質向上）
+	int phase_total = T + Out2Fb;
+	int sin_val;
+	if (g_Config.opm_sine_interpolation) {
+		int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+		int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+		int sin0 = SINTBL[phase_index];
+		int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+		sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+	} else {
+		sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+	}
+	int o = Alpha * sin_val;
 
 	Out2Fb = ((o + Inp_last) & Fl_mask) >> Fl;
 	Inp_last = o;
@@ -633,8 +689,22 @@ inline void Op::Output_22(int lfopitch, int lfolevel) {
 		Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 		LfoLevel = lfolevelame;
 	}
-	int o = (Alpha)
-		* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+	// 正弦波テーブルの線形補間（OPM音質向上）
+	int phase_total = T + inp;
+	int sin_val;
+	if (g_Config.opm_sine_interpolation) {
+		int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+		int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+		int sin0 = SINTBL[phase_index];
+		int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+		sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+	} else {
+		sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+	}
+	int o = Alpha * sin_val;
 
 	*out += o;
 };
@@ -654,8 +724,22 @@ inline void Op::Output32_22(int lfopitch, int lfolevel) {
 			Alpha = (int)(ALPHATBL[ALPHAZERO+Tl-Xr_el-lfolevelame]);
 			LfoLevel = lfolevelame;
 		}
-		o = (Alpha)
-			* (int)(SINTBL[(((T+inp)>>PRECISION_BITS))&(SIZESINTBL-1)]) ;
+
+		// 正弦波テーブルの線形補間（OPM音質向上）
+		int phase_total = T + inp;
+		int sin_val;
+		if (g_Config.opm_sine_interpolation) {
+			int phase_index = (phase_total >> PRECISION_BITS) & (SIZESINTBL-1);
+			int phase_frac = phase_total & ((1<<PRECISION_BITS)-1);
+
+			int sin0 = SINTBL[phase_index];
+			int sin1 = SINTBL[(phase_index+1) & (SIZESINTBL-1)];
+
+			sin_val = sin0 + (((sin1 - sin0) * phase_frac) >> PRECISION_BITS);
+		} else {
+			sin_val = (int)(SINTBL[(phase_total >> PRECISION_BITS) & (SIZESINTBL-1)]);
+		}
+		o = Alpha * sin_val;
 	} else {
 		NoiseCounter -= NoiseStep;
 		if (NoiseCounter <= 0) {
