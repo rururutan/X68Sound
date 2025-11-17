@@ -96,6 +96,42 @@ set X68SOUND_DEBUG=1
 - **DebugView** (Sysinternals) を使用
 - または、Visual Studioのデバッグ出力ウィンドウで確認
 
+### X68SOUND_LINEAR_INTERPOLATION
+線形補間による音質向上機能の有効/無効を設定します。
+
+- **デフォルト値**: `1` （有効）
+- **有効値**: `0` (無効) / `1` (有効)
+- **説明**: サンプルレート変換時に線形補間を適用します。有効にすると、エイリアシングノイズが軽減され、滑らかな音質になります。
+- **効果**:
+  - エイリアシングノイズの大幅軽減
+  - 高周波成分の歪みが減少
+  - CPU負荷は約5%増加
+- **推奨設定**: `1` （有効のまま）
+
+**設定例**:
+```batch
+REM 線形補間を無効化（実機互換性重視の場合）
+set X68SOUND_LINEAR_INTERPOLATION=0
+```
+
+### X68SOUND_VOLUME_SMOOTHING
+ボリュームスムージング機能の有効/無効を設定します（PCM8のみ）。
+
+- **デフォルト値**: `1` （有効）
+- **有効値**: `0` (無効) / `1` (有効)
+- **説明**: ボリューム変更時にクリックノイズを防ぐため、徐々にボリュームを変化させます。
+- **効果**:
+  - クリックノイズ完全除去
+  - 滑らかなボリューム変化（約5ms）
+  - CPU負荷は1%未満の増加
+- **推奨設定**: `1` （有効のまま）
+
+**設定例**:
+```batch
+REM ボリュームスムージングを無効化（即座のボリューム変更が必要な場合）
+set X68SOUND_VOLUME_SMOOTHING=0
+```
+
 ---
 
 ## 使用例
@@ -128,6 +164,26 @@ set X68SOUND_PCM_BUFFER=12
 set X68SOUND_LATE_TIME=400
 set X68SOUND_BETW_TIME=10
 set X68SOUND_BUF_MULTIPLIER=3
+
+your_application.exe
+```
+
+### シナリオ4: 最高音質設定（高性能PC向け）
+```batch
+REM 線形補間とボリュームスムージングを有効化（デフォルト）
+set X68SOUND_LINEAR_INTERPOLATION=1
+set X68SOUND_VOLUME_SMOOTHING=1
+set X68SOUND_PCM_BUFFER=5
+set X68SOUND_LATE_TIME=200
+
+your_application.exe
+```
+
+### シナリオ5: 実機完全互換モード
+```batch
+REM 音質向上機能を無効化して実機と同じ動作に
+set X68SOUND_LINEAR_INTERPOLATION=0
+set X68SOUND_VOLUME_SMOOTHING=0
 
 your_application.exe
 ```
@@ -177,6 +233,8 @@ your_application.exe
   LATE_TIME=300 ms
   REV_MARGIN=1.00
   BUF_MULTIPLIER=2
+  LINEAR_INTERPOLATION=1
+  VOLUME_SMOOTHING=1
 [X68Sound] DLL loaded successfully
 [X68Sound] Start: samprate=44100, betw=10, pcmbuf=16, late=300, rev=1.00
 ```
@@ -202,8 +260,11 @@ your_application.exe
 | `X68SOUND_REV_MARGIN` | 1.0 | 0.1-10.0 | サンプルレート補正 |
 | `X68SOUND_BUF_MULTIPLIER` | 1 | 1-8 | バッファ乗数 |
 | `X68SOUND_DEBUG` | 0 | 0/1 | デバッグログ |
+| `X68SOUND_LINEAR_INTERPOLATION` | 1 | 0/1 | 線形補間（音質向上） |
+| `X68SOUND_VOLUME_SMOOTHING` | 1 | 0/1 | ボリュームスムージング |
 
 ---
 
 **作成日**: 2025-01-17
-**バージョン**: 1.0
+**最終更新日**: 2025-11-17
+**バージョン**: 2.0

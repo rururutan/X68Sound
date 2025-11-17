@@ -23,6 +23,8 @@ struct X68SoundConfig {
 	double rev_margin;        // Sample rate revision margin (デフォルト: 1.0)
 	int enable_debug_log;     // デバッグログ有効化 (0/1)
 	int pcm_buf_multiplier;   // バッファサイズ乗数 (デフォルト: 1)
+	int linear_interpolation; // 線形補間有効化 (0/1, デフォルト: 1)
+	int volume_smoothing;     // ボリュームスムージング有効化 (0/1, デフォルト: 1)
 };
 
 // グローバルコンフィグインスタンス
@@ -32,7 +34,9 @@ X68SoundConfig g_Config = {
 	200,    // late_time
 	1.0,    // rev_margin
 	0,      // enable_debug_log
-	1       // pcm_buf_multiplier
+	1,      // pcm_buf_multiplier
+	1,      // linear_interpolation (デフォルト:ON)
+	1       // volume_smoothing (デフォルト:ON)
 };
 
 // 環境変数読み取りヘルパー関数
@@ -63,6 +67,8 @@ inline void LoadConfigFromEnvironment() {
 	g_Config.rev_margin = GetEnvDouble("X68SOUND_REV_MARGIN", 1.0);
 	g_Config.enable_debug_log = GetEnvInt("X68SOUND_DEBUG", 0);
 	g_Config.pcm_buf_multiplier = GetEnvInt("X68SOUND_BUF_MULTIPLIER", 1);
+	g_Config.linear_interpolation = GetEnvInt("X68SOUND_LINEAR_INTERPOLATION", 1);
+	g_Config.volume_smoothing = GetEnvInt("X68SOUND_VOLUME_SMOOTHING", 1);
 
 	// バリデーション
 	if (g_Config.pcm_buffer_size < 2) g_Config.pcm_buffer_size = 2;
@@ -75,22 +81,28 @@ inline void LoadConfigFromEnvironment() {
 	if (g_Config.rev_margin > 10.0) g_Config.rev_margin = 10.0;
 	if (g_Config.pcm_buf_multiplier < 1) g_Config.pcm_buf_multiplier = 1;
 	if (g_Config.pcm_buf_multiplier > 8) g_Config.pcm_buf_multiplier = 8;
+	g_Config.linear_interpolation = (g_Config.linear_interpolation != 0) ? 1 : 0;
+	g_Config.volume_smoothing = (g_Config.volume_smoothing != 0) ? 1 : 0;
 
 	// デバッグログ
 	if (g_Config.enable_debug_log) {
-		char logMsg[512];
+		char logMsg[768];
 		sprintf(logMsg,
 			"[X68Sound] Config loaded:\n"
 			"  PCM_BUFFER=%d\n"
 			"  BETW_TIME=%d ms\n"
 			"  LATE_TIME=%d ms\n"
 			"  REV_MARGIN=%.2f\n"
-			"  BUF_MULTIPLIER=%d\n",
+			"  BUF_MULTIPLIER=%d\n"
+			"  LINEAR_INTERPOLATION=%d\n"
+			"  VOLUME_SMOOTHING=%d\n",
 			g_Config.pcm_buffer_size,
 			g_Config.betw_time,
 			g_Config.late_time,
 			g_Config.rev_margin,
-			g_Config.pcm_buf_multiplier);
+			g_Config.pcm_buf_multiplier,
+			g_Config.linear_interpolation,
+			g_Config.volume_smoothing);
 		OutputDebugStringA(logMsg);
 	}
 }

@@ -1,16 +1,18 @@
 class Pcm8 {
-	int	Scale;		// 
+	int	Scale;		//
 	int Pcm;		// 16bit PCM Data
 	int	Pcm16Prev;	// 16bit,8bitPCMの1つ前のデータ
 	int	InpPcm,InpPcm_prev,OutPcm;		// HPF用 16bit PCM Data
 	int	OutInpPcm,OutInpPcm_prev;		// HPF用
+	int	PrevInpPcm;	// 線形補間用：前回のInpPcm値
 	int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
 	int	N1Data;
 	int N1DataFlag;	// 0 or 1
 
 	volatile int	Mode;
-	volatile int	Volume;	// x/16
+	volatile int	Volume;	// x/16（ターゲットボリューム）
+	int	CurrentVolume;	// ボリュームスムージング用：現在の実効ボリューム
 	volatile int	PcmKind;	// 0～4:ADPCM  5:16bitPCM  6:8bitPCM  7:無効
 
 	inline void adpcm2pcm(unsigned char adpcm);
@@ -65,6 +67,8 @@ inline void Pcm8::Init() {
 	Pcm16Prev = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
+	PrevInpPcm = 0;		// 線形補間用
+	CurrentVolume = 0;	// ボリュームスムージング用
 	AdpcmRate = 15625*12;
 	RateCounter = 0;
 	N1Data = 0;
@@ -86,6 +90,7 @@ inline void Pcm8::Reset() {
 	Pcm16Prev = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
+	PrevInpPcm = 0;		// 線形補間用
 
 	N1Data = 0;
 	N1DataFlag = 0;
@@ -256,7 +261,13 @@ inline int Pcm8::GetPcm() {
 	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
+
+	// 線形補間: 前回のサンプル値を保存
+	PrevInpPcm = InpPcm;
+
 	RateCounter -= AdpcmRate;
+	int needNewSample = (RateCounter < 0);
+
 	while (RateCounter < 0) {
 		if (PcmKind == 5)	// 16bitPCM {	// 16bitPCM
 			int dataH,dataL;
@@ -301,11 +312,36 @@ inline int Pcm8::GetPcm() {
 		}
 		RateCounter += 15625*12;
 	}
+
+	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	if (g_Config.linear_interpolation && needNewSample) {
+		// frac = RateCounter / (15625*12) の割合で補間（16bit固定小数点）
+		int sampleInterval = 15625*12;
+		int frac = (RateCounter << 16) / sampleInterval;
+		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);
+	}
+
 	// HPFフィルター適用（マジックナンバーを定数化）
 	OutPcm = ((InpPcm << HPF_SHIFT) - (InpPcm_prev << HPF_SHIFT) + HPF_COEFF_A1_22KHZ * OutPcm) >> HPF_SHIFT;
 	InpPcm_prev = InpPcm;
 
-	return (((OutPcm*Volume)>>4)*TotalVolume)>>8;
+	// ボリュームスムージング: CurrentVolumeをVolumeに徐々に近づける（環境変数で有効化されている場合）
+	int effectiveVolume = Volume;
+	if (g_Config.volume_smoothing) {
+		if (CurrentVolume != Volume) {
+			int diff = Volume - CurrentVolume;
+			if (diff > 0) {
+				CurrentVolume += (diff >> 8) + 1;
+				if (CurrentVolume > Volume) CurrentVolume = Volume;
+			} else {
+				CurrentVolume += (diff >> 8) - 1;
+				if (CurrentVolume < Volume) CurrentVolume = Volume;
+			}
+		}
+		effectiveVolume = CurrentVolume;
+	}
+
+	return (((OutPcm*effectiveVolume)>>4)*TotalVolume)>>8;
 }
 
 // -32768<<4 <= retval <= +32768<<4
@@ -313,7 +349,13 @@ inline int Pcm8::GetPcm62() {
 	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
+
+	// 線形補間: 前回のサンプル値を保存
+	PrevInpPcm = InpPcm;
+
 	RateCounter -= AdpcmRate;
+	int needNewSample = (RateCounter < 0);
+
 	while (RateCounter < 0) {
 		if (PcmKind == 5)	// 16bitPCM {	// 16bitPCM
 			int dataH,dataL;
@@ -358,11 +400,37 @@ inline int Pcm8::GetPcm62() {
 		}
 		RateCounter += 15625*12*4;
 	}
+
+	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	if (g_Config.linear_interpolation && needNewSample) {
+		// frac = RateCounter / (15625*12*4) の割合で補間（16bit固定小数点）
+		int sampleInterval = 15625*12*4;
+		int frac = (RateCounter << 16) / sampleInterval;
+		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);
+	}
+
 	OutInpPcm = (InpPcm<<9) - (InpPcm_prev<<9) +  OutInpPcm-(OutInpPcm>>5)-(OutInpPcm>>10);
 	InpPcm_prev = InpPcm;
 	OutPcm = OutInpPcm - OutInpPcm_prev + OutPcm-(OutPcm>>8)-(OutPcm>>9)-(OutPcm>>12);
 	OutInpPcm_prev = OutInpPcm;
-	return ((OutPcm>>9)*Volume)>>4;
+
+	// ボリュームスムージング: CurrentVolumeをVolumeに徐々に近づける（環境変数で有効化されている場合）
+	int effectiveVolume = Volume;
+	if (g_Config.volume_smoothing) {
+		if (CurrentVolume != Volume) {
+			int diff = Volume - CurrentVolume;
+			if (diff > 0) {
+				CurrentVolume += (diff >> 8) + 1;
+				if (CurrentVolume > Volume) CurrentVolume = Volume;
+			} else {
+				CurrentVolume += (diff >> 8) - 1;
+				if (CurrentVolume < Volume) CurrentVolume = Volume;
+			}
+		}
+		effectiveVolume = CurrentVolume;
+	}
+
+	return ((OutPcm>>9)*effectiveVolume)>>4;
 }
 
 

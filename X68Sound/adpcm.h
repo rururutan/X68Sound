@@ -1,8 +1,9 @@
 class Adpcm {
-	int	Scale;		// 
+	int	Scale;		//
 	int Pcm;		// 16bit PCM Data
 	int	InpPcm,InpPcm_prev,OutPcm;		// HPF用 16bit PCM Data
 	int	OutInpPcm,OutInpPcm_prev;		// HPF用
+	int	PrevInpPcm;	// 線形補間用：前回のInpPcm値
 	volatile int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
 	int	N1Data;	// ADPCM 1サンプルのデータの保存
@@ -89,6 +90,7 @@ inline void Adpcm::Init() {
 	Pcm = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
+	PrevInpPcm = 0;		// 線形補間用
 	AdpcmRate = 15625*12;
 	RateCounter = 0;
 	N1Data = 0;
@@ -115,6 +117,7 @@ inline void Adpcm::Reset() {
 	Pcm = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
+	PrevInpPcm = 0;		// 線形補間用
 
 	N1Data = 0;
 	N1DataFlag = 0;
@@ -359,7 +362,13 @@ inline int Adpcm::GetPcm() {
 	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
+
+	// 線形補間: 前回のサンプル値を保存
+	PrevInpPcm = InpPcm;
+
 	RateCounter -= AdpcmRate;
+	int needNewSample = (RateCounter < 0);
+
 	while (RateCounter < 0) {
 		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
 			int	N10Data;	// (N1Data << 4) | N0Data
@@ -377,6 +386,15 @@ inline int Adpcm::GetPcm() {
 		}
 		RateCounter += 15625*12;
 	}
+
+	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	if (g_Config.linear_interpolation && needNewSample) {
+		// frac = RateCounter / (15625*12) の割合で補間（16bit固定小数点）
+		int sampleInterval = 15625*12;
+		int frac = (RateCounter << 16) / sampleInterval;
+		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);
+	}
+
 	// HPFフィルター適用（マジックナンバーを定数化）
 	OutPcm = ((InpPcm << HPF_SHIFT) - (InpPcm_prev << HPF_SHIFT) + HPF_COEFF_A1_22KHZ * OutPcm) >> HPF_SHIFT;
 	InpPcm_prev = InpPcm;
@@ -389,7 +407,13 @@ inline int Adpcm::GetPcm62() {
 	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
+
+	// 線形補間: 前回のサンプル値を保存
+	PrevInpPcm = InpPcm;
+
 	RateCounter -= AdpcmRate;
+	int needNewSample = (RateCounter < 0);
+
 	while (RateCounter < 0) {
 		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
 			int	N10Data;	// (N1Data << 4) | N0Data
@@ -408,6 +432,15 @@ inline int Adpcm::GetPcm62() {
 		RateCounter += 15625*12*4;
 
 	}
+
+	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	if (g_Config.linear_interpolation && needNewSample) {
+		// frac = RateCounter / (15625*12*4) の割合で補間（16bit固定小数点）
+		int sampleInterval = 15625*12*4;
+		int frac = (RateCounter << 16) / sampleInterval;
+		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);
+	}
+
 	OutInpPcm = (InpPcm<<9) - (InpPcm_prev<<9) +  OutInpPcm-(OutInpPcm>>5)-(OutInpPcm>>10);
 	InpPcm_prev = InpPcm;
 	OutPcm = OutInpPcm - OutInpPcm_prev + OutPcm-(OutPcm>>8)-(OutPcm>>9)-(OutPcm>>12);
