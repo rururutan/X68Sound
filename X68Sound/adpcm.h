@@ -1,19 +1,19 @@
 class Adpcm {
 	int	Scale;		//
 	int Pcm;		// 16bit PCM Data
-	int	InpPcm,InpPcm_prev,OutPcm;		// HPF用 16bit PCM Data
-	int	OutInpPcm,OutInpPcm_prev;		// HPF用
-	int	PrevInpPcm;	// 線形補間用：前回のInpPcm値
+	int	InpPcm,InpPcm_prev,OutPcm;		// 16bit PCM Data for HPF
+	int	OutInpPcm,OutInpPcm_prev;		// For HPF
+	int	PrevInpPcm;	// Previous InpPcm value for linear interpolation
 	volatile int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
-	int	N1Data;	// ADPCM 1サンプルのデータの保存
+	int	N1Data;	// Storage for ADPCM 1 sample data
 	int N1DataFlag;	// 0 or 1
 
 	inline void adpcm2pcm(unsigned char adpcm);
 
 public:
-	void (CALLBACK *IntProc)();	// 割り込みアドレス
-	void (CALLBACK *ErrIntProc)();	// エラー割り込みアドレス
+	void (CALLBACK *IntProc)();	// Interrupt address
+	void (CALLBACK *ErrIntProc)();	// Error interrupt address
 
 
 

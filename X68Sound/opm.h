@@ -50,15 +50,15 @@ private:
 	inline void SetConnection(int ch, int alg);
 	volatile int	OpOut[8];
 	int	OpOutDummy;
-	int	TimerAreg10;	// OPMreg$10の値
-	int	TimerAreg11;	// OPMreg$11の値
-	int	TimerA;			// タイマーAのオーバーフロー設定値
-	int	TimerAcounter;	// タイマーAのカウンター値
-	int	TimerB;			// タイマーBのオーバーフロー設定値
-	int	TimerBcounter;	// タイマーBのカウンター値
-	volatile int	TimerReg;		// タイマー制御レジスタ (OPMreg$14の下位4ビット+7ビット)
-	volatile int	StatReg;		// OPMステータスレジスタ ($E90003の下位2ビット)
-	void (CALLBACK *OpmIntProc)();	// OPM割り込みコールバック関数
+	int	TimerAreg10;	// Value of OPMreg$10
+	int	TimerAreg11;	// Value of OPMreg$11
+	int	TimerA;			// Timer A overflow setting value
+	int	TimerAcounter;	// Timer A counter value
+	int	TimerB;			// Timer B overflow setting value
+	int	TimerBcounter;	// Timer B counter value
+	volatile int	TimerReg;		// Timer control register (lower 4 bits + bit 7 of OPMreg$14)
+	volatile int	StatReg;		// OPM status register (lower 2 bits of $E90003)
+	void (CALLBACK *OpmIntProc)();	// OPM interrupt callback function
 
 	double inpopmbuf_dummy;
 	short InpOpmBuf0[OPMLPF_COL*2],InpOpmBuf1[OPMLPF_COL*2];
@@ -1480,7 +1480,7 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	}
 	Dousa_mode = 1;
 
-	// 環境変数設定を適用（引数が-1またはデフォルト値の場合）
+	// Apply environment variable settings (when argument is -1 or default value)
 	if (betw <= 0) betw = g_Config.betw_time;
 	if (pcmbuf <= 0) pcmbuf = g_Config.pcm_buffer_size * g_Config.pcm_buf_multiplier;
 	if (late <= 0) late = g_Config.late_time;
@@ -1493,12 +1493,12 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	_late = late;
 	_rev = rev;
 
-	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	// Override if output sampling rate is specified in environment variable
 	if (g_Config.output_sample_rate != 0) {
 		samprate = g_Config.output_sample_rate;
 	}
 
-	// デバッグログ
+	// Debug logging
 	if (g_Config.enable_debug_log) {
 		char logMsg[256];
 		sprintf(logMsg, "[X68Sound] Start: samprate=%d, betw=%d, pcmbuf=%d, late=%d, rev=%.2f\n",
@@ -1512,12 +1512,12 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 		Samprate = samprate;
 	} else if (samprate == 96000) {
 		Samprate = samprate;
-		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		// 96kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else if (samprate == 192000) {
 		Samprate = samprate;
-		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		// 192kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else {
@@ -1545,7 +1545,7 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 	}
 	Dousa_mode = 2;
 
-	// 環境変数設定を適用
+	// Apply environment variable settings
 	if (pcmbuf <= 0) pcmbuf = g_Config.pcm_buffer_size * g_Config.pcm_buf_multiplier;
 
 	UseOpmFlag = opmflag;
@@ -1555,12 +1555,12 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 	_late = g_Config.late_time;
 	_rev = g_Config.rev_margin;
 
-	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	// Override if output sampling rate is specified in environment variable
 	if (g_Config.output_sample_rate != 0) {
 		samprate = g_Config.output_sample_rate;
 	}
 
-	// デバッグログ
+	// Debug logging
 	if (g_Config.enable_debug_log) {
 		char logMsg[256];
 		sprintf(logMsg, "[X68Sound] StartPcm: samprate=%d, pcmbuf=%d\n", samprate, pcmbuf);
@@ -1573,12 +1573,12 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 		Samprate = samprate;
 	} else if (samprate == 96000) {
 		Samprate = samprate;
-		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		// 96kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else if (samprate == 192000) {
 		Samprate = samprate;
-		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		// 192kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else {
@@ -1602,7 +1602,7 @@ inline int Opm::SetSamprate(int samprate) {
 
 	Free();
 
-	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	// Override if output sampling rate is specified in environment variable
 	if (g_Config.output_sample_rate != 0) {
 		samprate = g_Config.output_sample_rate;
 	}
@@ -1613,12 +1613,12 @@ inline int Opm::SetSamprate(int samprate) {
 		Samprate = samprate;
 	} else if (samprate == 96000) {
 		Samprate = samprate;
-		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		// 96kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else if (samprate == 192000) {
 		Samprate = samprate;
-		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		// 192kHz: Use 48kHz filter (closest setting)
 		OPMLPF_ROW = OPMLPF_ROW_48;
 		OPMLOWPASS = OPMLOWPASS_48;
 	} else {

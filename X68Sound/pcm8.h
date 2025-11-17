@@ -1,19 +1,19 @@
 class Pcm8 {
 	int	Scale;		//
 	int Pcm;		// 16bit PCM Data
-	int	Pcm16Prev;	// 16bit,8bitPCMの1つ前のデータ
-	int	InpPcm,InpPcm_prev,OutPcm;		// HPF用 16bit PCM Data
-	int	OutInpPcm,OutInpPcm_prev;		// HPF用
-	int	PrevInpPcm;	// 線形補間用：前回のInpPcm値
+	int	Pcm16Prev;	// Previous data for 16bit/8bit PCM
+	int	InpPcm,InpPcm_prev,OutPcm;		// 16bit PCM Data for HPF
+	int	OutInpPcm,OutInpPcm_prev;		// For HPF
+	int	PrevInpPcm;	// Previous InpPcm value for linear interpolation
 	int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
 	int	N1Data;
 	int N1DataFlag;	// 0 or 1
 
 	volatile int	Mode;
-	volatile int	Volume;	// x/16（ターゲットボリューム）
-	int	CurrentVolume;	// ボリュームスムージング用：現在の実効ボリューム
-	volatile int	PcmKind;	// 0～4:ADPCM  5:16bitPCM  6:8bitPCM  7:無効
+	volatile int	Volume;	// x/16 (Target volume)
+	int	CurrentVolume;	// Current effective volume for volume smoothing
+	volatile int	PcmKind;	// 0-4:ADPCM  5:16bitPCM  6:8bitPCM  7:Invalid
 
 	inline void adpcm2pcm(unsigned char adpcm);
 	inline void	pcm16_2pcm(int pcm16);
@@ -515,7 +515,7 @@ inline int	Pcm8::SetMode(int mode) {
 	if (m != 0xFF) {
 		m &= 3;
 		if (m == 0) {
-				AdpcmReg = 0xC7;	// ADPCM 停止
+				AdpcmReg = 0xC7;	// ADPCM stop
 			DmaMtc = 0;
 		} else {
 			Mode = (Mode&0xFFFFFF00)|(m);

@@ -15,21 +15,21 @@
 int	DebugValue=0;
 int	ErrorCode=0;
 
-// 環境変数による設定構造体
+// Configuration structure from environment variables
 struct X68SoundConfig {
-	int pcm_buffer_size;      // PCMバッファサイズ (デフォルト: 5)
-	int betw_time;            // Between time in ms (デフォルト: 5)
-	int late_time;            // Latency time in ms (デフォルト: 200)
-	double rev_margin;        // Sample rate revision margin (デフォルト: 1.0)
-	int enable_debug_log;     // デバッグログ有効化 (0/1)
-	int pcm_buf_multiplier;   // バッファサイズ乗数 (デフォルト: 1)
-	int linear_interpolation;     // PCM8/ADPCM線形補間有効化 (0/1, デフォルト: 1)
-	int volume_smoothing;         // PCM8ボリュームスムージング有効化 (0/1, デフォルト: 1)
-	int opm_sine_interpolation;   // OPM正弦波テーブル線形補間有効化 (0/1, デフォルト: 1)
-	int output_sample_rate;       // 出力サンプリングレート (0=自動, 22050/44100/48000/96000/192000)
+	int pcm_buffer_size;      // PCM buffer size (default: 5)
+	int betw_time;            // Between time in ms (default: 5)
+	int late_time;            // Latency time in ms (default: 200)
+	double rev_margin;        // Sample rate revision margin (default: 1.0)
+	int enable_debug_log;     // Enable debug logging (0/1)
+	int pcm_buf_multiplier;   // Buffer size multiplier (default: 1)
+	int linear_interpolation;     // Enable PCM8/ADPCM linear interpolation (0/1, default: 1)
+	int volume_smoothing;         // Enable PCM8 volume smoothing (0/1, default: 1)
+	int opm_sine_interpolation;   // Enable OPM sine table linear interpolation (0/1, default: 1)
+	int output_sample_rate;       // Output sampling rate (0=auto, 22050/44100/48000/96000/192000)
 };
 
-// グローバルコンフィグインスタンス
+// Global configuration instance
 X68SoundConfig g_Config = {
 	5,      // pcm_buffer_size
 	5,      // betw_time
@@ -37,13 +37,13 @@ X68SoundConfig g_Config = {
 	1.0,    // rev_margin
 	0,      // enable_debug_log
 	1,      // pcm_buf_multiplier
-	1,      // linear_interpolation (デフォルト:ON)
-	1,      // volume_smoothing (デフォルト:ON)
-	1,      // opm_sine_interpolation (デフォルト:ON)
-	0       // output_sample_rate (0=自動検出)
+	1,      // linear_interpolation (default: ON)
+	1,      // volume_smoothing (default: ON)
+	1,      // opm_sine_interpolation (default: ON)
+	0       // output_sample_rate (0=auto-detect)
 };
 
-// 環境変数読み取りヘルパー関数
+// Helper function to read environment variable as integer
 inline int GetEnvInt(const char* name, int defaultValue) {
 	char buffer[256];
 	DWORD result = GetEnvironmentVariableA(name, buffer, sizeof(buffer));
@@ -76,7 +76,7 @@ inline void LoadConfigFromEnvironment() {
 	g_Config.opm_sine_interpolation = GetEnvInt("X68SOUND_OPM_SINE_INTERP", 1);
 	g_Config.output_sample_rate = GetEnvInt("X68SOUND_OUTPUT_RATE", 0);
 
-	// バリデーション
+	// Validation
 	if (g_Config.pcm_buffer_size < 2) g_Config.pcm_buffer_size = 2;
 	if (g_Config.pcm_buffer_size > 20) g_Config.pcm_buffer_size = 20;
 	if (g_Config.betw_time < 1) g_Config.betw_time = 1;
@@ -91,17 +91,17 @@ inline void LoadConfigFromEnvironment() {
 	g_Config.volume_smoothing = (g_Config.volume_smoothing != 0) ? 1 : 0;
 	g_Config.opm_sine_interpolation = (g_Config.opm_sine_interpolation != 0) ? 1 : 0;
 
-	// 出力サンプリングレートの検証 (0=自動検出、または対応レートのみ許可)
+	// Validate output sampling rate (0=auto-detect, or allow only supported rates)
 	if (g_Config.output_sample_rate != 0 &&
 		g_Config.output_sample_rate != 22050 &&
 		g_Config.output_sample_rate != 44100 &&
 		g_Config.output_sample_rate != 48000 &&
 		g_Config.output_sample_rate != 96000 &&
 		g_Config.output_sample_rate != 192000) {
-		g_Config.output_sample_rate = 0;  // 無効な値の場合は自動検出にフォールバック
+		g_Config.output_sample_rate = 0;  // Fall back to auto-detect for invalid values
 	}
 
-	// デバッグログ
+	// Debug logging
 	if (g_Config.enable_debug_log) {
 		char logMsg[768];
 		sprintf(logMsg,
@@ -383,22 +383,22 @@ const int PCM8VOLTBL[16] = {
 
 #define	PCM8_NCH	8
 
-// PCM8ミキシング関連定数
+// PCM8 mixing constants
 #define PCM8_MAX_VOLUME_SUM		(32767 << 4)
 #define PCM8_MIN_VOLUME_SUM		(-32768 << 4)
 
-// HPFフィルター係数
-#define HPF_COEFF_A1_22KHZ		459		// 22kHz用フィルター係数 (512 - 53)
-#define HPF_SHIFT				9		// フィルターシフト量
+// HPF filter coefficients
+#define HPF_COEFF_A1_22KHZ		459		// Filter coefficient for 22kHz (512 - 53)
+#define HPF_SHIFT				9		// Filter shift amount
 
-// パンニング定数
-#define PAN_LEFT				0x01	// 左チャンネル有効
-#define PAN_RIGHT				0x02	// 右チャンネル有効
-#define PAN_STEREO				0x03	// ステレオ（両チャンネル）
+// Panning constants
+#define PAN_LEFT				0x01	// Left channel enabled
+#define PAN_RIGHT				0x02	// Right channel enabled
+#define PAN_STEREO				0x03	// Stereo (both channels)
 
-// オーディオバッファサイズ定数
-#define LATE_SAMPLES_MIN		50		// 最小レイテンシサンプル数
-#define BETW_SAMPLES_MIN		1		// 最小Between サンプル数
+// Audio buffer size constants
+#define LATE_SAMPLES_MIN		50		// Minimum latency samples
+#define BETW_SAMPLES_MIN		1		// Minimum between samples
 
 
 unsigned char *bswapl(unsigned char *adrs) {
@@ -420,7 +420,7 @@ unsigned int irnd(void) {
 	return seed;
 }
 
-// 飽和演算（オーバーフロー対策）
+// Saturating arithmetic (overflow protection)
 inline int saturate_add_pcm(int accumulator, int value) {
 	int64_t result = (int64_t)accumulator + (int64_t)value;
 	if (result > PCM8_MAX_VOLUME_SUM) {
@@ -433,20 +433,20 @@ inline int saturate_add_pcm(int accumulator, int value) {
 
 
 
-int	TotalVolume;	// 全体音量 x/256
+int	TotalVolume;	// Total volume x/256
 
 volatile static long TimerSemapho=0;
 
 #define	OPMLPF_COL	64
 
 #define	OPMLPF_ROW_44	441
-static double opmlowpass_dummy_44;	// 64bit境界合わせ
+static double opmlowpass_dummy_44;	// 64-bit boundary alignment
 static short OPMLOWPASS_44[OPMLPF_ROW_44][OPMLPF_COL] = {
 	#include "opmlowpass_44.dat"
 };
 
 #define	OPMLPF_ROW_48	96
-static double opmlowpass_dummy_48;	// 64bit境界合わせ
+static double opmlowpass_dummy_48;	// 64-bit boundary alignment
 static short OPMLOWPASS_48[OPMLPF_ROW_48][OPMLPF_COL] = {
 	#include "opmlowpass_48.dat"
 };
