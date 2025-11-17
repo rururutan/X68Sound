@@ -6,20 +6,19 @@
 //#define	DELAY	(1000/5)
 
 #ifdef C86CTL
-// c86ctl �p��`
+
+// c86ctl用定義
 typedef HRESULT (WINAPI *C86CtlCreateInstance)( REFIID, LPVOID* );
 #endif
 
 class Opm {
 	char *Author;
-
-	Op	op[8][4];	// �I�y���[�^0�`31
-	int	EnvCounter1;	// �G���x���[�v�p�J�E���^1 (0,1,2,3,4,5,6,...)
-	int	EnvCounter2;	// �G���x���[�v�p�J�E���^2 (3,2,1,3,2,1,3,2,...)
-//	int	con[N_CH];	// �A���S���Y�� 0�`7
-	int	pan[2][N_CH];	// 0:���� -1:�o��
+	Op	op[8][4];	// オペレータ0～31
+	int	EnvCounter1;	// エンベロープ用カウンタ1 (0,1,2,3,4,5,6,...)
+	int	EnvCounter2;	// エンベロープ用カウンタ2 (3,2,1,3,2,1,3,2,...)
+	int	pan[2][N_CH];	// 0:無音 -1:出力
 //	int pms[N_CH];	// 0, 1, 2, 4, 10, 20, 80, 140
-//	int	ams[N_CH];	// �E�V�t�g�� 31(0), 2(1), 1(2), 0(3)
+
 //	int	pmd;
 //	int	amd;
 //	int	pmspmd[N_CH];	// pms[]*pmd
@@ -41,26 +40,25 @@ public:
 private:
 	unsigned int	TimerID;
 
-//	int	LfoOverTime;	// LFO t�̃I�[�o�[�t���[�l
-//	int	LfoTime;	// LFO��p t
-//	int LfoRndTime;	// LFO�����_���g��pt
+
+
+
 //	int 
-//	int	Lfrq;		// LFO���g���ݒ�l LFRQ
+
 //	int	LfoWaveForm;	// LFO wave form
 //	inline void	CalcLfoStep();
 	inline void SetConnection(int ch, int alg);
 	volatile int	OpOut[8];
 	int	OpOutDummy;
-
-	int	TimerAreg10;	// OPMreg$10�̒l
-	int	TimerAreg11;	// OPMreg$11�̒l
-	int	TimerA;			// �^�C�}�[A�̃I�[�o�[�t���[�ݒ�l
-	int	TimerAcounter;	// �^�C�}�[A�̃J�E���^�[�l
-	int	TimerB;			// �^�C�}�[B�̃I�[�o�[�t���[�ݒ�l
-	int	TimerBcounter;	// �^�C�}�[B�̃J�E���^�[�l
-	volatile int	TimerReg;		// �^�C�}�[���䃌�W�X�^ (OPMreg$14�̉���4�r�b�g+7�r�b�g)
-	volatile int	StatReg;		// OPM�X�e�[�^�X���W�X�^ ($E90003�̉���2�r�b�g)
-	void (CALLBACK *OpmIntProc)();	// OPM���荞�݃R�[���o�b�N�֐�
+	int	TimerAreg10;	// OPMreg$10の値
+	int	TimerAreg11;	// OPMreg$11の値
+	int	TimerA;			// タイマーAのオーバーフロー設定値
+	int	TimerAcounter;	// タイマーAのカウンター値
+	int	TimerB;			// タイマーBのオーバーフロー設定値
+	int	TimerBcounter;	// タイマーBのカウンター値
+	volatile int	TimerReg;		// タイマー制御レジスタ (OPMreg$14の下位4ビット+7ビット)
+	volatile int	StatReg;		// OPMステータスレジスタ ($E90003の下位2ビット)
+	void (CALLBACK *OpmIntProc)();	// OPM割り込みコールバック関数
 
 	double inpopmbuf_dummy;
 	short InpOpmBuf0[OPMLPF_COL*2],InpOpmBuf1[OPMLPF_COL*2];
@@ -76,27 +74,24 @@ private:
 	int	InpInpOpm_prev2[2],InpOpm_prev2[2];
 	int OpmHpfInp[2], OpmHpfInp_prev[2], OpmHpfOut[2];
 	int OutInpAdpcm[2],OutInpAdpcm_prev[2],OutInpAdpcm_prev2[2],
-		OutOutAdpcm[2],OutOutAdpcm_prev[2],OutOutAdpcm_prev2[2];	// �����t�B���^�[�Q�p�o�b�t�@
+		OutOutAdpcm[2],OutOutAdpcm_prev[2],OutOutAdpcm_prev2[2];
 	int OutInpOutAdpcm[2],OutInpOutAdpcm_prev[2],OutInpOutAdpcm_prev2[2],
-		OutOutInpAdpcm[2],OutOutInpAdpcm_prev[2];			// �����t�B���^�[�R�p�o�b�t�@
+		OutOutInpAdpcm[2],OutOutInpAdpcm_prev[2];
 	
 	volatile unsigned char	PpiReg;
-	unsigned char	AdpcmBaseClock;	// ADPCM�N���b�N�؂�ւ�(0:8MHz 1:4Mhz)
+	unsigned char	AdpcmBaseClock;	// ADPCMクロック切り替え(0:8MHz 1:4Mhz)
 	inline void SetAdpcmRate();
-
-	unsigned char	OpmRegNo;		// ���ݎw�肳��Ă���OPM���W�X�^�ԍ�
-	unsigned char	OpmRegNo_backup;		// �o�b�N�A�b�v�pOPM���W�X�^�ԍ�
-	void (CALLBACK *BetwIntProc)();	// �}���`���f�B�A�^�C�}�[���荞��
+	unsigned char	OpmRegNo;		// 現在指定されているOPMレジスタ番号
+	unsigned char	OpmRegNo_backup;		// バックアップ用OPMレジスタ番号
+	void (CALLBACK *BetwIntProc)();	// マルチメディアタイマー割り込み
 	int (CALLBACK *WaveFunc)();		// WaveFunc
-
-	int	UseOpmFlag;		// OPM�𗘗p���邩�ǂ����̃t���O
-	int	UseAdpcmFlag;	// ADPCM�𗘗p���邩�ǂ����̃t���O
+	int	UseOpmFlag;		// OPMを利用するかどうかのフラグ
+	int	UseAdpcmFlag;	// ADPCMを利用するかどうかのフラグ
 	int _betw;
 	int _pcmbuf;
 	int _late;
 	int _rev;
-
-	int Dousa_mode;		// 0:�񓮍� 1:X68Sound_Start��  2:X68Sound_PcmStart��
+	int Dousa_mode;		// 0:非動作 1:X68Sound_Start中  2:X68Sound_PcmStart中
 
 	int OpmChMask;		// Channel Mask
 
@@ -105,10 +100,10 @@ private:
 //private:
 	Pcm8	pcm8[PCM8_NCH];
 
-//	int	TotalVolume;	// ���� x/256
+
 
 #ifdef C86CTL
-private: // c86ctl �p
+private:
 	HMODULE hC86DLL;
 	c86ctl::IRealChipBase *pChipBase;
 	c86ctl::IRealChip2 *pChipOPM;
@@ -275,13 +270,12 @@ inline void Opm::CalcCmndRate() {
 }
 
 inline void Opm::Reset() {
-	// OPM�R�}���h�o�b�t�@��������
-	NumCmnd = 0;
+	NumCmnd = 0;	// OPMコマンドバッファをクリア
 	CmndReadIdx = CmndWriteIdx = 0;
 
 	CalcCmndRate();
 
-	// �����t�B���^�[�p�o�b�t�@���N���A
+
 	InpInpOpm[0] = InpInpOpm[1] =
 	InpInpOpm_prev[0] = InpInpOpm_prev[1] = 0;
 	InpInpOpm_prev2[0] = InpInpOpm_prev2[1] = 0;
@@ -325,7 +319,7 @@ inline void Opm::Reset() {
 	OutOutInpAdpcm_prev[0] = OutOutInpAdpcm_prev[1] =
 	0;
 
-	// �S�I�y���[�^��������
+
 	{
 		int	ch;
 		for (ch=0; ch<N_CH; ++ch) {
@@ -339,22 +333,22 @@ inline void Opm::Reset() {
 		}
 	}
 
-	// �G���x���[�v�p�J�E���^��������
+
 	{
 		EnvCounter1 = 0;
 		EnvCounter2 = 3;
 	}
 
 
-	// LFO������
+
 	lfo.Init();
 
-	// PcmBuf�|�C���^�[�����Z�b�g
+
 	PcmBufPtr=0;
 //	PcmBufSize = PCMBUFSIZE;
 
 
-	// �^�C�}�[�֌W�̏�����
+
 	TimerAreg10 = 0;
 	TimerAreg11 = 0;
 	TimerA = 1024-0;
@@ -406,7 +400,7 @@ inline void Opm::Reset() {
 inline void Opm::ResetSamprate() {
 	CalcCmndRate();
 
-	// �����t�B���^�[�p�o�b�t�@���N���A
+
 	InpInpOpm[0] = InpInpOpm[1] =
 	InpInpOpm_prev[0] = InpInpOpm_prev[1] = 0;
 	InpInpOpm_prev2[0] = InpInpOpm_prev2[1] = 0;
@@ -450,7 +444,7 @@ inline void Opm::ResetSamprate() {
 	OutOutInpAdpcm_prev[0] = OutOutInpAdpcm_prev[1] =
 	0;
 
-	// �S�I�y���[�^��������
+
 	{
 		int	ch;
 		for (ch=0; ch<N_CH; ++ch) {
@@ -461,10 +455,10 @@ inline void Opm::ResetSamprate() {
 		}
 	}
 
-	// LFO��������
+
 	lfo.InitSamprate();
 
-	// PcmBuf�|�C���^�[�����Z�b�g
+
 	PcmBufPtr=0;
 //	PcmBufSize = PCMBUFSIZE;
 
@@ -485,7 +479,7 @@ Opm::Opm(void) {
 	OpmChMask = 0;
 
 #ifdef C86CTL
-	// C86CTL �̃��[�h
+
 	pChipBase = NULL;
 	pChipOPM = NULL;
 	
@@ -494,7 +488,7 @@ Opm::Opm(void) {
 		C86CtlCreateInstance pCI = (C86CtlCreateInstance)::GetProcAddress( hC86DLL, "CreateInstance" );
 		if( pCI ) (*pCI)( c86ctl::IID_IRealChipBase, (void**)&pChipBase );
 	}
-	// C86CTL�̏����� & OPM���W���[���̒T��
+
 	if( pChipBase ){
 		pChipBase->initialize();
 		int num  = pChipBase->getNumberOfChip();
@@ -519,7 +513,7 @@ Opm::Opm(void) {
 inline void Opm::MakeTable() {
 
 
-	// sin�e�[�u�����쐬
+
 	{
 		int	i;
 		for (i=0; i<SIZESINTBL; ++i) {
@@ -536,7 +530,7 @@ inline void Opm::MakeTable() {
 	}
 
 
-	// �G���x���[�v�l �� �� �ϊ��e�[�u�����쐬
+
 	{
 		int	i;
 		for (i=0; i<=ALPHAZERO+SIZEALPHATBL; ++i) {
@@ -548,7 +542,7 @@ inline void Opm::MakeTable() {
 				*1.0*1.0*PRECISION +0.0);
 		}
 	}
-	// �G���x���[�v�l �� Noise�� �ϊ��e�[�u�����쐬
+
 	{
 		int	i;
 		for (i=0; i<=ALPHAZERO+SIZEALPHATBL; ++i) {
@@ -557,11 +551,11 @@ inline void Opm::MakeTable() {
 		for (i=17; i<=SIZEALPHATBL; ++i) {
 			NOISEALPHATBL[ALPHAZERO+i] = floor(
 				i*1.0/(SIZEALPHATBL)
-				*1.0*0.25*PRECISION +0.0); // Noise���ʂ�Op��1/4
+				*1.0*0.25*PRECISION +0.0);
 		}
 	}
 
-	// D1L �� D1l �ϊ��e�[�u�����쐬
+
 	{
 		int i;
 		for (i=0; i<15; ++i) {
@@ -571,7 +565,7 @@ inline void Opm::MakeTable() {
 	}
 
 
-	// C1 <-> M2 ����ւ��e�[�u�����쐬
+
 	{
 		int	slot;
 		for (slot=0; slot<8; ++slot) {
@@ -582,7 +576,7 @@ inline void Opm::MakeTable() {
 		}
 	}
 	
-	// Pitch����t�ϊ��e�[�u�����쐬
+
 	{
 		int	oct,notekf,step;
 
@@ -673,7 +667,7 @@ inline void Opm::OpmPoke(unsigned char data) {
 		break;
 
 	case 0x14:
-	// �^�C�}�[���䃌�W�X�^
+
 		{
 			while (_InterlockedCompareExchange(&TimerSemapho, 1, 0) == 1);
 
@@ -965,7 +959,7 @@ inline void Opm::pcmset62(int ndata) {
 						op[7][3].Output32(lfopitch[7], lfolevel[7]);
 					}
 
-					// OpmHpfInp[] �� OPM �̏o��PCM���X�e���I���Z
+
 					OpmHpfInp[0] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[0][0]))
 									+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[0][1]))
 									+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[0][2]))
@@ -997,9 +991,9 @@ inline void Opm::pcmset62(int ndata) {
 					InpInpOpm[1] = OpmHpfOut[1] >> (4+5);
 					
 //					InpInpOpm[0] = (InpInpOpm[0]&(int)0xFFFFFC00)
-//									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5); // 8*-2^17 �` 8*+2^17
+
 //					InpInpOpm[1] = (InpInpOpm[1]&(int)0xFFFFFC00)
-//									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5); // 8*-2^17 �` 8*+2^17
+
 
 					InpInpOpm[0] = InpInpOpm[0]*29;
 					InpInpOpm[1] = InpInpOpm[1]*29;
@@ -1010,16 +1004,16 @@ inline void Opm::pcmset62(int ndata) {
 					InpInpOpm_prev[0] = InpInpOpm[0];
 					InpInpOpm_prev[1] = InpInpOpm[1];
 
-					OutInpOpm[0] = InpOpm[0] >> 5; // 8*-2^12 �` 8*+2^12
-					OutInpOpm[1] = InpOpm[1] >> 5; // 8*-2^12 �` 8*+2^12
-//					OutInpOpm[0] = (InpOpm[0]*521) >> (5+9); // 8*-2^12 �` 8*+2^12
-//					OutInpOpm[1] = (InpOpm[1]*521) >> (5+9); // OPM��ADPCM�̉��ʃo�����X����
+					OutInpOpm[0] = InpOpm[0] >> 5;
+					OutInpOpm[1] = InpOpm[1] >> 5;
+
+
 				}  // UseOpmFlags == 1
 			}	// UseOpmFlag
 
 			if (UseAdpcmFlag) {
 				OutInpAdpcm[0] = OutInpAdpcm[1] = 0;
-				// OutInpAdpcm[] �� Adpcm �̏o��PCM�����Z
+
 				{
 					int	o;
 					o = adpcm.GetPcm62();
@@ -1055,7 +1049,7 @@ inline void Opm::pcmset62(int ndata) {
 //				OutInpAdpcm[0] >>= 4;
 //				OutInpAdpcm[1] >>= 4;
 					
-				// ������h�~
+
 				#define	LIMITS	((1<<(15+4))-1)
 				if ((unsigned int)(OutInpAdpcm[0]+LIMITS) > (unsigned int)(LIMITS*2)) {
 					if ((int)(OutInpAdpcm[0]+LIMITS) >= (int)(LIMITS*2)) {
@@ -1100,15 +1094,15 @@ inline void Opm::pcmset62(int ndata) {
 				OutOutAdpcm_prev[0] = OutOutAdpcm[0];
 				OutOutAdpcm_prev[1] = OutOutAdpcm[1];
 
-//				OutInpOpm[0] += OutOutAdpcm[0] >> 4;	// -2048*16�`+2048*16
-//				OutInpOpm[1] += OutOutAdpcm[1] >> 4;	// -2048*16�`+2048*16
-				OutInpOpm[0] += (OutOutAdpcm[0]*506) >> (4+9);	// -2048*16�`+2048*16
-				OutInpOpm[1] += (OutOutAdpcm[1]*506) >> (4+9);	// OPM��ADPCM�̉��ʃo�����X����
+
+
+				OutInpOpm[0] += (OutOutAdpcm[0]*506) >> (4+9);
+				OutInpOpm[1] += (OutOutAdpcm[1]*506) >> (4+9);
 			}	// UseAdpcmFlag
 			
 
 
-			// ������h�~
+
 			#define	PCM_LIMITS	((1<<15)-1)
 			if ((unsigned int)(OutInpOpm[0]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
 				if ((int)(OutInpOpm[0]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
@@ -1141,15 +1135,15 @@ inline void Opm::pcmset62(int ndata) {
 			OpmLPFp = OPMLOWPASS[0];
 		}
 
-		// �S�̂̉��ʂ𒲐�
+
 		OutOpm[0] = (OutOpm[0]*TotalVolume) >> 8;
 		OutOpm[1] = (OutOpm[1]*TotalVolume) >> 8;
 
-		Out[0] -= OutOpm[0];	// -4096 �` +4096
+		Out[0] -= OutOpm[0];
 		Out[1] -= OutOpm[1];
 
 
-		// WaveFunc()�̏o�͒l�����Z
+
 		if (WaveFunc != NULL) {
 			int	ret;
 			ret = WaveFunc();
@@ -1158,7 +1152,7 @@ inline void Opm::pcmset62(int ndata) {
 		}
 
 
-		// ������h�~
+
 		if ((unsigned int)(Out[0]+32767) > (unsigned int)(32767*2)) {
 			if ((int)(Out[0]+32767) >= (int)(32767*2)) {
 				Out[0] = 32767;
@@ -1240,7 +1234,7 @@ inline void Opm::pcmset22(int ndata) {
 					}
 
 
-				// InpInpOpm[] �� OPM �̏o��PCM���X�e���I���Z
+
 				InpInpOpm[0] =    ((OpmChMask & 0x01) ? 0 : (OpOut[0] & pan[0][0]))
 								+ ((OpmChMask & 0x02) ? 0 : (OpOut[1] & pan[0][1]))
 								+ ((OpmChMask & 0x04) ? 0 : (OpOut[2] & pan[0][2]))
@@ -1261,9 +1255,9 @@ inline void Opm::pcmset22(int ndata) {
 				{
 
 					InpInpOpm[0] = (InpInpOpm[0]&(int)0xFFFFFC00)
-									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5); // 8*-2^17 �` 8*+2^17
+									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5);
 					InpInpOpm[1] = (InpInpOpm[1]&(int)0xFFFFFC00)
-									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5); // 8*-2^17 �` 8*+2^17
+									>> ((SIZESINTBL_BITS+PRECISION_BITS)-10-5);
 				}
 #if 0
 				InpInpOpm[0] += (InpInpOpm[0]<<4)+InpInpOpm[0];	// * 18
@@ -1286,11 +1280,11 @@ inline void Opm::pcmset22(int ndata) {
 				InpOpm[1] = InpInpOpm[1];
 #endif
 
-			// �S�̂̉��ʂ𒲐�
+
 			OutOpm[0] = (InpOpm[0]*TotalVolume) >> 8;
 			OutOpm[1] = (InpOpm[1]*TotalVolume) >> 8;
 
-			Out[0] -= OutOpm[0]>>(5);	// -4096 �` +4096
+			Out[0] -= OutOpm[0]>>(5);
 			Out[1] -= OutOpm[1]>>(5);
 		}  // UseOpmFlags == 1
 		}  // UseOpmFlags
@@ -1303,7 +1297,7 @@ inline void Opm::pcmset22(int ndata) {
 					rate2 += WaveOutSamp;
 
 					OutInpAdpcm[0] = OutInpAdpcm[1] = 0;
-					// OutInpAdpcm[] �� Adpcm �̏o��PCM�����Z
+
 					{
 						int	o;
 						o = adpcm.GetPcm();
@@ -1335,11 +1329,11 @@ inline void Opm::pcmset22(int ndata) {
 						}
 					}
 
-					// �S�̂̉��ʂ𒲐�
+
 //					OutInpAdpcm[0] = (OutInpAdpcm[0]*TotalVolume) >> 8;
 //					OutInpAdpcm[1] = (OutInpAdpcm[1]*TotalVolume) >> 8;
 
-					// ������h�~
+
 					#define	PCM_LIMITS	((1<<19)-1)
 					if ((unsigned int)(OutInpAdpcm[0]+PCM_LIMITS) > (unsigned int)(PCM_LIMITS*2)) {
 						if ((int)(OutInpAdpcm[0]+PCM_LIMITS) >= (int)(PCM_LIMITS*2)) {
@@ -1377,18 +1371,18 @@ inline void Opm::pcmset22(int ndata) {
 
 
 
-//			Out[0] += OutAdpcm[0] >> 4;	// -2048*16�`+2048*16
+
 //			Out[1] += OutAdpcm[1] >> 4;
-			Out[0] -= OutOutAdpcm[0] >> 4;	// -2048*16�`+2048*16
+			Out[0] -= OutOutAdpcm[0] >> 4;
 			Out[1] -= OutOutAdpcm[1] >> 4;
 		}
 
-//		// �S�̂̉��ʂ𒲐�
+
 //		Out[0] = (Out[0]*TotalVolume) >> 8;
 //		Out[1] = (Out[1]*TotalVolume) >> 8;
 
 
-		// WaveFunc()�̏o�͒l�����Z
+
 		if (WaveFunc != NULL) {
 			int	ret;
 			ret = WaveFunc();
@@ -1397,7 +1391,7 @@ inline void Opm::pcmset22(int ndata) {
 		}
 
 
-		// ������h�~
+
 		if ((unsigned int)(Out[0]+32767) > (unsigned int)(32767*2)) {
 			if ((int)(Out[0]+32767) >= (int)(32767*2)) {
 				Out[0] = 32767;
@@ -1445,7 +1439,7 @@ inline void Opm::timer() {
 
 	int	prev_stat = StatReg;
 	int flag_set = 0;
-	if (TimerReg & 0x01) {	// TimerA ���쒆
+	if (TimerReg & 0x01) {
 		++TimerAcounter;
 		if (TimerAcounter >= TimerA) {
 			flag_set |= ((TimerReg>>2) & 0x01);
@@ -1453,7 +1447,7 @@ inline void Opm::timer() {
 			if (TimerReg & 0x80) CsmKeyOn();
 		}
 	}
-	if (TimerReg & 0x02) {	// TimerB ���쒆
+	if (TimerReg & 0x02) {
 		++TimerBcounter;
 		if (TimerBcounter >= TimerB) {
 			flag_set |= ((TimerReg>>2) & 0x02);
@@ -1751,7 +1745,7 @@ inline int Opm::WaveAndTimerStart() {
 		return X68SNDERR_TIMER;
 	}
 
-	while (!timer_start_flag) Sleep(200);	// �}���`���f�B�A�^�C�}�[�̏������J�n�����܂ő҂�
+	while (!timer_start_flag) Sleep(200);
 
 	return 0;
 }
@@ -1776,19 +1770,19 @@ inline void Opm::Free() {
 	}
 #endif
 
-	if (TimerID != NULL) {	// �}���`���f�B�A�^�C�}�[��~
+	if (TimerID != NULL) {
 		timeKillEvent(TimerID);
 		TimerID = NULL;
 		timeEndPeriod(TimerResolution);
 	}
-	if (thread_handle) {	// �X���b�h��~
+	if (thread_handle) {
 		PostThreadMessage(thread_id, THREADMES_KILL, 0, 0);
 		WaitForSingleObject(thread_handle, INFINITE);
 		CloseHandle(thread_handle);
 		thread_handle = NULL;
 	}
-	timer_start_flag = 0;	// �}���`���f�B�A�^�C�}�[�̏������~
-	if (hwo != NULL) {		// �E�F�[�u�Đ���~
+	timer_start_flag = 0;
+	if (hwo != NULL) {
 //		waveOutReset(hwo);
 		if (lpwh) {
 			int i;
@@ -1823,8 +1817,8 @@ inline unsigned char Opm::AdpcmPeek() {
 inline void Opm::AdpcmPoke(unsigned char data) {
 //#ifdef ADPCM_POLY
 #if 0
-	// PCM8�e�X�g
-	if (data & 0x02) {	// ADPCM�Đ��J�n
+
+	if (data & 0x02) {
 		static int pcm8_pantbl[4]={3,1,2,0};
 		int minch=0,ch;
 		unsigned int minlen=0xFFFFFFFF;
@@ -1834,16 +1828,16 @@ inline void Opm::AdpcmPoke(unsigned char data) {
 				minch = ch;
 			}
 		}
-		if (adpcm.DmaReg[0x05] & 0x08) {	// �`�F�C�j���O����
-			if (!(adpcm.DmaReg[0x05] & 0x04)) {	// �A���C�`�F�C��
+		if (adpcm.DmaReg[0x05] & 0x08) {
+			if (!(adpcm.DmaReg[0x05] & 0x04)) {
 				pcm8[minch].Aot(bswapl(*(unsigned char **)&(adpcm.DmaReg[0x1C])),
 					(8<<16)+(ADPCMRATETBL[AdpcmBaseClock][(PpiReg>>2)&3]<<8)+pcm8_pantbl[PpiReg&3],
 					bswapw(*(unsigned short *)&(adpcm.DmaReg[0x1A])));
-			} else {						// �����N�A���C�`�F�C��
+			} else {
 				pcm8[minch].Lot(bswapl(*(unsigned char **)&(adpcm.DmaReg[0x1C])),
 					(8<<16)+(ADPCMRATETBL[AdpcmBaseClock][(PpiReg>>2)&3]<<8)+pcm8_pantbl[PpiReg&3]);
 			}
-		} else {	// �m�[�}���]��
+		} else {
 			pcm8[minch].Out(bswapl(*(unsigned char **)&(adpcm.DmaReg[0x0C])),
 				(8<<16)+(ADPCMRATETBL[AdpcmBaseClock][(PpiReg>>2)&3]<<8)+pcm8_pantbl[PpiReg&3],
 				bswapw(*(unsigned short *)&(adpcm.DmaReg[0x0A])));
@@ -1851,15 +1845,15 @@ inline void Opm::AdpcmPoke(unsigned char data) {
 		if (adpcm.IntProc != NULL) {
 			adpcm.IntProc();
 		}
-	} else if (data & 0x01) {	// �Đ������~
+	} else if (data & 0x01) {
 	}
 	return;
 #endif
 	
-	// �I���W�i��
-	if (data & 0x02) {	// ADPCM�Đ��J�n
+
+	if (data & 0x02) {
 		adpcm.AdpcmReg &= 0x7F;
-	} else if (data & 0x01) {	// �Đ������~
+	} else if (data & 0x01) {
 		adpcm.AdpcmReg |= 0x80;
 		adpcm.Reset();
 	}
@@ -1884,7 +1878,7 @@ inline void Opm::PpiCtrl(unsigned char data) {
 inline unsigned char Opm::DmaPeek(unsigned char adrs) {
 	if (adrs >= 0x40) return 0;
 	if (adrs == 0x00) {
-		if ((adpcm.AdpcmReg & 0x80) == 0) {	// ADPCM �Đ���
+		if ((adpcm.AdpcmReg & 0x80) == 0) {
 			adpcm.DmaReg[0x00] |= 0x02;
 			return adpcm.DmaReg[0x00] | 0x01;
 		}
@@ -1895,7 +1889,7 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 	if (adrs >= 0x40) return;
 	switch (adrs) {
 	case 0x00:	// CSR
-		data &= 0xF6;					// ACT��PCS�̓N���A���Ȃ�
+		data &= 0xF6;
 		adpcm.DmaReg[adrs] &= ~data;
 		if (data & 0x10) {
 			adpcm.DmaReg[0x01] = 0;
@@ -1921,7 +1915,7 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 	case 0x29: // MFC
 	case 0x31: // DFC
 		if (adpcm.DmaReg[0x00] & 0x08) {	// ACT==1 ?
-			adpcm.DmaError(0x02);	// ����^�C�~���O�G���[
+			adpcm.DmaError(0x02);
 			break;
 		}
 	case 0x1A:	// BTC
@@ -1943,7 +1937,7 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 		if (data&0x80) {		// STR == 1 ?
 
 			if (adpcm.DmaReg[0x00] & 0xF8) {	// COC|BTC|NDT|ERR|ACT == 1 ?
-				adpcm.DmaError(0x02);	// ����^�C�~���O�G���[
+				adpcm.DmaError(0x02);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
@@ -1952,14 +1946,14 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 			if (  adpcm.DmaReg[0x04] & 0x08		// DPS != 0 ?
 				||adpcm.DmaReg[0x06] & 0x03		// DAC != 00 ?
 				||bswapl(*(unsigned char **)&adpcm.DmaReg[0x14]) != (unsigned char *)0x00E92003) {
-				adpcm.DmaError(0x0A);	// �o�X�G���[(�f�o�C�X�A�h���X)
+				adpcm.DmaError(0x0A);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
 			unsigned char ocr;
 			ocr = adpcm.DmaReg[0x05] & 0xB0;
 			if (ocr != 0x00 && ocr != 0x30) {	// DIR==1 || SIZE!=00&&SIZE!=11 ?
-				adpcm.DmaError(0x01);	// �R���t�B�O���[�V�����G���[
+				adpcm.DmaError(0x01);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
@@ -1967,13 +1961,13 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 		}
 		if (data&0x40) {	// CNT == 1 ?
 			if ( (adpcm.DmaReg[0x00] & 0x48) != 0x08 ) {	// !(BTC==0&&ACT==1) ?
-				adpcm.DmaError(0x02);	// ����^�C�~���O�G���[
+				adpcm.DmaError(0x02);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
 
 			if (adpcm.DmaReg[0x05] & 0x08) {	// CHAIN == 10 or 11 ?
-				adpcm.DmaError(0x01);	// �R���t�B�O���[�V�����G���[
+				adpcm.DmaError(0x01);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
@@ -1981,7 +1975,7 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 		}
 		if (data&0x10) {	// SAB == 1 ?
 			if (adpcm.DmaReg[0x00] & 0x08) {	// ACT == 1 ?
-				adpcm.DmaError(0x11);	// �\�t�g�E�F�A������~
+				adpcm.DmaError(0x11);
 				adpcm.DmaReg[0x07] = data & 0x28;
 				break;
 			}
@@ -1989,13 +1983,13 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 		if (data&0x80) {	// STR == 1 ?
 			data &= 0x7F;
 
-			if (adpcm.DmaReg[0x05] & 0x08) {	// �`�F�C�j���O����
-				if (!(adpcm.DmaReg[0x05] & 0x04)) {	// �A���C�`�F�C��
+			if (adpcm.DmaReg[0x05] & 0x08) {
+				if (!(adpcm.DmaReg[0x05] & 0x04)) {
 					if (adpcm.DmaArrayChainSetNextMtcMar()) {
 						adpcm.DmaReg[0x07] = data & 0x28;
 						break;
 					}
-				} else {						// �����N�A���C�`�F�C��
+				} else {
 					if (adpcm.DmaLinkArrayChainSetNextMtcMar()) {
 						adpcm.DmaReg[0x07] = data & 0x28;
 						break;
@@ -2004,7 +1998,7 @@ inline void Opm::DmaPoke(unsigned char adrs, unsigned char data) {
 			}
 			
 			if ( (*(unsigned short *)&adpcm.DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-				adpcm.DmaError(0x0D);	// �J�E���g�G���[(�������A�h���X/�������J�E���^)
+				adpcm.DmaError(0x0D);
 				data &= 0x28;
 				break;
 			}

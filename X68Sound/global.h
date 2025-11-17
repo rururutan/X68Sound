@@ -122,8 +122,8 @@ inline void LoadConfigFromEnvironment() {
 
 int	Samprate = 44100;
 int	WaveOutSamp = 44100;
-int OpmWait = 240;	// 24.0�ʂ�
-int	OpmRate = 62500;	// ���̓N���b�N��64
+int OpmWait = 240;	// 24.0us相当
+int	OpmRate = 62500;	// 実機のクロックは64
 
 int	STEPTBL[11*12*64];
 //int	STEPTBL3[11*12*64];
@@ -400,20 +400,20 @@ inline int saturate_add_pcm(int accumulator, int value) {
 
 
 
-int	TotalVolume;	// ���� x/256
+int	TotalVolume;	// 全体音量 x/256
 
 volatile static long TimerSemapho=0;
 
 #define	OPMLPF_COL	64
 
 #define	OPMLPF_ROW_44	441
-static double opmlowpass_dummy_44;	// 64bit���E���킹
+static double opmlowpass_dummy_44;	// 64bit境界合わせ
 static short OPMLOWPASS_44[OPMLPF_ROW_44][OPMLPF_COL] = {
 	#include "opmlowpass_44.dat"
 };
 
 #define	OPMLPF_ROW_48	96
-static double opmlowpass_dummy_48;	// 64bit���E���킹
+static double opmlowpass_dummy_48;	// 64bit境界合わせ
 static short OPMLOWPASS_48[OPMLPF_ROW_48][OPMLPF_COL] = {
 	#include "opmlowpass_48.dat"
 };

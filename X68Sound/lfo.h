@@ -11,7 +11,7 @@
 //#define	CYCLE2PMAM	(30-8)				// log2(LFOTIMECYCLE/SIZEPMAMTBL)
 //#define	LFOHZ		0.0009313900811
 //int		LFOSTEPTBL[256];
-//int		LFOSTEPTBL3[256];		// Wave form 3 用
+
 //short	PMSTBL[8]={ 0,1,2,4,8,16,64,128 };
 int	PMSMUL[8]={ 0,1,2,4,8,16,32,32 };
 int	PMSSHL[8]={ 0,0,0,0,0, 0, 1, 2 };
@@ -21,19 +21,19 @@ int	PMSSHL[8]={ 0,0,0,0,0, 0, 1, 2 };
 class Lfo {
 	int Pmsmul[N_CH];	// 0, 1, 2, 4, 8, 16, 32, 32
 	int Pmsshl[N_CH];	// 0, 0, 0, 0, 0,  0,  1,  2
-	int	Ams[N_CH];	// 左シフト回数 31(0), 0(1), 1(2), 2(3)
+	int	Ams[N_CH];
 	int	PmdPmsmul[N_CH];	// Pmd*Pmsmul[]
 	int	Pmd;
 	int	Amd;
 
-	int LfoStartingFlag;	// 0:LFO停止中  1:LFO動作中
-	int	LfoOverFlow;	// LFO tのオーバーフロー値
-	int	LfoTime;	// LFO専用 t
-	int	LfoTimeAdd;	// LFO専用Δt
-	int LfoIdx;	// LFOテーブルへのインデックス値
-	int LfoSmallCounter;	// LFO周期微調整カウンタ (0～15の値をとる)
-	int LfoSmallCounterStep;	// LFO周期微調整カウンタ用ステップ値 (16～31)
-	int	Lfrq;		// LFO周波数設定値 LFRQ
+	int LfoStartingFlag;
+	int	LfoOverFlow;
+	int	LfoTime;
+	int	LfoTimeAdd;
+	int LfoIdx;
+	int LfoSmallCounter;
+	int LfoSmallCounterStep;
+	int	Lfrq;
 	int	LfoWaveForm;	// LFO wave form
 
 	int	PmTblValue,AmTblValue;
@@ -148,7 +148,7 @@ inline void Lfo::InitSamprate() {
 inline void Lfo::LfoReset() {
 	LfoStartingFlag = 0;
 
-//	LfoTime はリセットされない！！
+
 	LfoIdx = 0;
 
 	CulcTblValue();
@@ -169,7 +169,7 @@ inline void Lfo::SetLFRQ(int n) {
 	}
 	LfoOverFlow = (8<<shift) * LFOPRECISION;
 
-//	LfoTime はリセットされる
+
 	LfoTime = 0;
 }
 inline void Lfo::SetPMDAMD(int n) {
@@ -209,7 +209,7 @@ inline void	Lfo::Update() {
 	}
 
 	LfoTime += LfoTimeAdd;
-//2008.4.19 sam 修正 LfoTimeの誤差を小さくするため,残余を保存する
+
 //	if (LfoTime >= LfoOverFlow) {
 //		LfoTime = 0;
 	while(LfoTime >= LfoOverFlow) {

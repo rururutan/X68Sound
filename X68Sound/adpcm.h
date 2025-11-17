@@ -1,23 +1,23 @@
 class Adpcm {
 	int	Scale;		// 
 	int Pcm;		// 16bit PCM Data
-	int InpPcm,InpPcm_prev,OutPcm;		// HPF�p 16bit PCM Data
-	int OutInpPcm,OutInpPcm_prev;		// HPF�p
+	int	InpPcm,InpPcm_prev,OutPcm;		// HPF用 16bit PCM Data
+	int	OutInpPcm,OutInpPcm_prev;		// HPF用
 	volatile int	AdpcmRate;	// 187500(15625*12), 125000(10416.66*12), 93750(7812.5*12), 62500(5208.33*12), 46875(3906.25*12), ...
 	int	RateCounter;
-	int	N1Data;	// ADPCM 1�T���v���̃f�[�^�̕ۑ�
+	int	N1Data;	// ADPCM 1サンプルのデータの保存
 	int N1DataFlag;	// 0 or 1
 
 	inline void adpcm2pcm(unsigned char adpcm);
 
 public:
-	void (CALLBACK *IntProc)();	// ���荞�݃A�h���X
-	void (CALLBACK *ErrIntProc)();	// ���荞�݃A�h���X
-//	int	AdpcmFlag;	// 0:�񓮍�  1:�Đ���
-//	int PpiReg;		// PPI ���W�X�^�̓��e
-//	int	DmaCsr;		// DMA CSR ���W�X�^�̓��e
-//	int	DmaCcr;		// DMA CCR ���W�X�^�̓��e
-//	int	DmaFlag;	// 0:DMA�񓮍�  1:DMA���쒆
+	void (CALLBACK *IntProc)();	// 割り込みアドレス
+	void (CALLBACK *ErrIntProc)();	// エラー割り込みアドレス
+
+
+
+
+
 	inline int	DmaGetByte();
 	unsigned char	DmaLastValue;
 	volatile unsigned char	AdpcmReg;
@@ -108,7 +108,7 @@ inline void Adpcm::Init() {
 inline void Adpcm::InitSamprate() {
 	RateCounter = 0;
 }
-inline void Adpcm::Reset() {	// ADPCM �L�[�I�����̏���
+inline void Adpcm::Reset() {
 
 	Scale = 0;
 
@@ -149,7 +149,7 @@ inline int Adpcm::DmaContinueSetNextMtcMar() {
 	*(unsigned int *)&DmaReg[0x0C] = *(unsigned int *)&DmaReg[0x1C];	// BAR -> MAR
 	DmaReg[0x29] = DmaReg[0x39];	// BFC -> MFC
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);	// �J�E���g�G���[(�������A�h���X/�������J�E���^)
+			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
 		return 1;
 	}
 	DmaReg[0x00] |= 0x40;		// BTC=1
@@ -181,7 +181,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	mem4 = MemRead(Bar++);
 	mem5 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5) == -1) {
-		DmaError(0x0B);		// �o�X�G���[(�x�[�X�A�h���X/�x�[�X�J�E���^)
+			DmaError(0x0B);		// バスエラー(ベースアドレス/ベースカウンタ)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -193,7 +193,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	DmaReg[0x0B] = mem5;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);		// �J�E���g�G���[(�������A�h���X/�������J�E���^)
+			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
 		return 1;
 	}
 	return 0;
@@ -220,7 +220,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	mem8 = MemRead(Bar++);
 	mem9 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5|mem6|mem7|mem8|mem9) == -1) {
-		DmaError(0x0B);		// �o�X�G���[(�x�[�X�A�h���X/�x�[�X�J�E���^)
+			DmaError(0x0B);		// バスエラー(ベースアドレス/ベースカウンタ)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -236,7 +236,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	DmaReg[0x1F] = mem9;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-		DmaError(0x0D);		// �J�E���g�G���[(�������A�h���X/�������J�E���^)
+			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
 		return 1;
 	}
 	return 0;
@@ -251,7 +251,7 @@ inline int	Adpcm::DmaGetByte() {
 	unsigned short	Mtc;
 	Mtc = bswapw(*(unsigned short *)&DmaReg[0x0A]);
 	if (Mtc == 0) {
-//		if (DmaReg[0x07] & 0x40) {	// Continue����
+
 //			if (DmaContinueSetNextMtcMar()) {
 //				return 0x80000000;
 //			}
@@ -268,7 +268,7 @@ inline int	Adpcm::DmaGetByte() {
 		int mem;
 		mem = MemRead(Mar);
 		if (mem == -1) {
-			DmaError(0x09);	// �o�X�G���[(�������A�h���X/�������J�E���^)
+			DmaError(0x09);	// バスエラー(転送先アドレス/転送先カウンタ)
 			return 0x80000000;
 		}
 		DmaLastValue = mem;
@@ -281,21 +281,21 @@ inline int	Adpcm::DmaGetByte() {
 
 	try {
 	if (Mtc == 0) {
-		if (DmaReg[0x07] & 0x40) {	// Continue����
+		if (DmaReg[0x07] & 0x40) {
 			if (DmaContinueSetNextMtcMar()) {
 				throw "";
 			}
-		} else if (DmaReg[0x05] & 0x08) {	// �`�F�C�j���O����
-			if (!(DmaReg[0x05] & 0x04)) {	// �A���C�`�F�C��
+		} else if (DmaReg[0x05] & 0x08) {
+			if (!(DmaReg[0x05] & 0x04)) {
 				if (DmaArrayChainSetNextMtcMar()) {
 					throw "";
 				}
-			} else {						// �����N�A���C�`�F�C��
+			} else {
 				if (DmaLinkArrayChainSetNextMtcMar()) {
 					throw "";
 				}
 			}
-		} else {	// �m�[�}���]���I��
+		} else {
 //			if (!(DmaReg[0x00] & 0x40)) {		// BTC=1 ?
 //				if (DmaContinueSetNextMtcMar()) {
 //					throw "";
@@ -321,7 +321,7 @@ inline int	Adpcm::DmaGetByte() {
 
 #define	MAXPCMVAL	(2047)
 
-// adpcm����͂��� InpPcm �̒l��ω�������
+
 // -2047<<(4+4) <= InpPcm <= +2047<<(4+4)
 inline void	Adpcm::adpcm2pcm(unsigned char adpcm) {
 
@@ -356,23 +356,23 @@ inline void	Adpcm::adpcm2pcm(unsigned char adpcm) {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm() {
-	if (AdpcmReg & 0x80) {		// ADPCM ��~��
+	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0) {		// ����ADPCM�f�[�^�������ɂȂ��ꍇ
+		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA�]��(1�o�C�g)
+			N10Data = DmaGetByte();	// DMA転送(1バイト)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm �ɒl������
+			adpcm2pcm(N10Data & 0x0F);	// InpPcm に値を代入
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm �ɒl������
+			adpcm2pcm(N1Data);			// InpPcm に値を代入
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12;
@@ -386,23 +386,23 @@ inline int Adpcm::GetPcm() {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm62() {
-	if (AdpcmReg & 0x80) {		// ADPCM ��~��
+	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
 		return 0x80000000;
 	}
 	RateCounter -= AdpcmRate;
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0) {		// ����ADPCM�f�[�^�������ɂȂ��ꍇ
+		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA�]��(1�o�C�g)
+			N10Data = DmaGetByte();	// DMA転送(1バイト)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm �ɒl������
+			adpcm2pcm(N10Data & 0x0F);	// InpPcm に値を代入
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm �ɒl������
+			adpcm2pcm(N1Data);			// InpPcm に値を代入
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12*4;

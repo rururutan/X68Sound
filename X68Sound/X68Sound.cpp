@@ -18,13 +18,15 @@
 
 
 
-Opm	opm;
+Opm	opm;  // OPMメインインスタンス
 //MMTIME	mmt;
 
-void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance, 
+// waveOut再生コールバック関数
+// オーディオバッファの再生完了時に呼ばれる
+void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 						  DWORD dwParam1, DWORD dwParam2) {
 	if (uMsg == WOM_DONE && thread_flag) {
-		timer_start_flag = 1;	// �}���`���f�B�A�^�C�}�[�̏������J�n
+		timer_start_flag = 1;  // マルチメディアタイマーの処理を開始
 
 
 		playingblk = (playingblk+1) & (N_waveblk-1);
@@ -37,12 +39,11 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 		genptr -= playptr;
 		if (genptr <= Late_Samples) {
 			if (Late_Samples-Faster_Limit <= genptr) {
-				// ���������x��Ă���
+				// バッファが遅れ気味
 				nSamples = Betw_Samples_Faster;
 			} else {
-				// ���������i�݂����Ă���
+				// バッファが進みすぎている
 //				nSamples = Betw_Samples_VerySlower;
-				// ���������x�ꂷ���Ă���
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
 				while (ptr >= opm.PcmBufSize) ptr -= opm.PcmBufSize;
@@ -50,10 +51,10 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 			}
 		} else {
 			if (genptr <= Late_Samples+Slower_Limit) {
-				// ���������i��ł���
+				// バッファが進み気味
 				nSamples = Betw_Samples_Slower;
 			} else {
-				// ���������i�݂����Ă���
+				// バッファが進みすぎている
 //				nSamples = Betw_Samples_VerySlower;
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
@@ -66,6 +67,7 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 	}
 }
 
+// waveOut専用スレッド関数
 DWORD WINAPI waveOutThread( LPVOID ) {
 	MSG Msg;
 
@@ -73,7 +75,7 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 
 	while (GetMessage( &Msg, NULL, 0, 0)) {
 		if (Msg.message == THREADMES_WAVEOUTDONE) {
-
+			// バッファをwaveOutに送信
 			waveOutWrite(hwo, lpwh+waveblk, sizeof(WAVEHDR));
 
 			++waveblk;
@@ -92,7 +94,9 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 }
 
 
-// �}���`���f�B�A�^�C�}�[
+
+// マルチメディアタイマーコールバック関数
+// PCM生成とタイマー割り込み処理を実行
 void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
 		if (!timer_start_flag) return;
 
@@ -104,6 +108,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 
 		opm.PushRegs();
 
+		// PCM波形を生成
 		if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
 			opm.pcmset22(nSamples);
 		} else {
@@ -111,7 +116,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 		}
 
 //		opm.timer();
-		opm.betwint();
+		opm.betwint();  // Between割り込み処理
 
 
 		opm.PopRegs();
@@ -138,6 +143,11 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 
 
 
+// ============================================================
+//   C API 関数エクスポート
+// ============================================================
+
+// X68Sound初期化（waveOut出力モード）
 extern "C" int X68Sound_Start(int samprate, int opmflag, int adpcmflag,
 				  int betw, int pcmbuf, int late, double rev) {
 	return opm.Start(samprate, opmflag, adpcmflag, betw, pcmbuf, late, rev);
