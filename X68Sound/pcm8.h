@@ -68,7 +68,7 @@ inline void Pcm8::Init() {
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
 	PrevInpPcm = 0;		// For linear interpolation
-	CurrentVolume = 0;	// For volume smoothing
+	CurrentVolume = Volume;	// For volume smoothing - initialize to current volume
 	AdpcmRate = 15625*12;
 	RateCounter = 0;
 	N1Data = 0;
