@@ -26,6 +26,7 @@ struct X68SoundConfig {
 	int linear_interpolation;     // PCM8/ADPCM線形補間有効化 (0/1, デフォルト: 1)
 	int volume_smoothing;         // PCM8ボリュームスムージング有効化 (0/1, デフォルト: 1)
 	int opm_sine_interpolation;   // OPM正弦波テーブル線形補間有効化 (0/1, デフォルト: 1)
+	int output_sample_rate;       // 出力サンプリングレート (0=自動, 22050/44100/48000/96000/192000)
 };
 
 // グローバルコンフィグインスタンス
@@ -38,7 +39,8 @@ X68SoundConfig g_Config = {
 	1,      // pcm_buf_multiplier
 	1,      // linear_interpolation (デフォルト:ON)
 	1,      // volume_smoothing (デフォルト:ON)
-	1       // opm_sine_interpolation (デフォルト:ON)
+	1,      // opm_sine_interpolation (デフォルト:ON)
+	0       // output_sample_rate (0=自動検出)
 };
 
 // 環境変数読み取りヘルパー関数
@@ -72,6 +74,7 @@ inline void LoadConfigFromEnvironment() {
 	g_Config.linear_interpolation = GetEnvInt("X68SOUND_LINEAR_INTERPOLATION", 1);
 	g_Config.volume_smoothing = GetEnvInt("X68SOUND_VOLUME_SMOOTHING", 1);
 	g_Config.opm_sine_interpolation = GetEnvInt("X68SOUND_OPM_SINE_INTERP", 1);
+	g_Config.output_sample_rate = GetEnvInt("X68SOUND_OUTPUT_RATE", 0);
 
 	// バリデーション
 	if (g_Config.pcm_buffer_size < 2) g_Config.pcm_buffer_size = 2;
@@ -88,6 +91,16 @@ inline void LoadConfigFromEnvironment() {
 	g_Config.volume_smoothing = (g_Config.volume_smoothing != 0) ? 1 : 0;
 	g_Config.opm_sine_interpolation = (g_Config.opm_sine_interpolation != 0) ? 1 : 0;
 
+	// 出力サンプリングレートの検証 (0=自動検出、または対応レートのみ許可)
+	if (g_Config.output_sample_rate != 0 &&
+		g_Config.output_sample_rate != 22050 &&
+		g_Config.output_sample_rate != 44100 &&
+		g_Config.output_sample_rate != 48000 &&
+		g_Config.output_sample_rate != 96000 &&
+		g_Config.output_sample_rate != 192000) {
+		g_Config.output_sample_rate = 0;  // 無効な値の場合は自動検出にフォールバック
+	}
+
 	// デバッグログ
 	if (g_Config.enable_debug_log) {
 		char logMsg[768];
@@ -100,7 +113,8 @@ inline void LoadConfigFromEnvironment() {
 			"  BUF_MULTIPLIER=%d\n"
 			"  LINEAR_INTERPOLATION=%d\n"
 			"  VOLUME_SMOOTHING=%d\n"
-			"  OPM_SINE_INTERPOLATION=%d\n",
+			"  OPM_SINE_INTERPOLATION=%d\n"
+			"  OUTPUT_SAMPLE_RATE=%d (0=auto)\n",
 			g_Config.pcm_buffer_size,
 			g_Config.betw_time,
 			g_Config.late_time,
@@ -108,7 +122,8 @@ inline void LoadConfigFromEnvironment() {
 			g_Config.pcm_buf_multiplier,
 			g_Config.linear_interpolation,
 			g_Config.volume_smoothing,
-			g_Config.opm_sine_interpolation);
+			g_Config.opm_sine_interpolation,
+			g_Config.output_sample_rate);
 		OutputDebugStringA(logMsg);
 	}
 }

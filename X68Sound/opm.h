@@ -1493,6 +1493,11 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 	_late = late;
 	_rev = rev;
 
+	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	if (g_Config.output_sample_rate != 0) {
+		samprate = g_Config.output_sample_rate;
+	}
+
 	// デバッグログ
 	if (g_Config.enable_debug_log) {
 		char logMsg[256];
@@ -1500,11 +1505,21 @@ inline int Opm::Start(int samprate, int opmflag, int adpcmflag,
 			samprate, betw, pcmbuf, late, rev);
 		OutputDebugStringA(logMsg);
 	}
-	
+
 	if (samprate == 44100) {
 		Samprate = samprate;
 	} else if (samprate == 48000) {
 		Samprate = samprate;
+	} else if (samprate == 96000) {
+		Samprate = samprate;
+		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
+	} else if (samprate == 192000) {
+		Samprate = samprate;
+		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
 	} else {
 		Samprate = samprate;
 	}
@@ -1540,6 +1555,11 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 	_late = g_Config.late_time;
 	_rev = g_Config.rev_margin;
 
+	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	if (g_Config.output_sample_rate != 0) {
+		samprate = g_Config.output_sample_rate;
+	}
+
 	// デバッグログ
 	if (g_Config.enable_debug_log) {
 		char logMsg[256];
@@ -1551,6 +1571,16 @@ inline int Opm::StartPcm(int samprate, int opmflag, int adpcmflag, int pcmbuf) {
 		Samprate = samprate;
 	} else if (samprate == 48000) {
 		Samprate = samprate;
+	} else if (samprate == 96000) {
+		Samprate = samprate;
+		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
+	} else if (samprate == 192000) {
+		Samprate = samprate;
+		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
 	} else {
 		Samprate = samprate;
 	}
@@ -1571,11 +1601,26 @@ inline int Opm::SetSamprate(int samprate) {
 	int dousa_mode_bak = Dousa_mode;
 
 	Free();
-	
+
+	// 環境変数で出力サンプリングレートが指定されている場合は上書き
+	if (g_Config.output_sample_rate != 0) {
+		samprate = g_Config.output_sample_rate;
+	}
+
 	if (samprate == 44100) {
 		Samprate = samprate;
 	} else if (samprate == 48000) {
 		Samprate = samprate;
+	} else if (samprate == 96000) {
+		Samprate = samprate;
+		// 96kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
+	} else if (samprate == 192000) {
+		Samprate = samprate;
+		// 192kHz: 48kHzフィルターを使用（最も近い設定）
+		OPMLPF_ROW = OPMLPF_ROW_48;
+		OPMLOWPASS = OPMLOWPASS_48;
 	} else {
 		Samprate = samprate;
 	}

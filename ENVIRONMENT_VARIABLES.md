@@ -151,6 +151,38 @@ REM OPM線形補間を無効化（実機完全互換性重視の場合）
 set X68SOUND_OPM_SINE_INTERP=0
 ```
 
+### X68SOUND_OUTPUT_RATE
+出力サンプリングレートを明示的に設定します（ハイレゾ対応）。
+
+- **デフォルト値**: `0` （自動検出）
+- **有効値**: `0` (自動) / `22050` / `44100` / `48000` / `96000` / `192000`
+- **説明**: 出力サンプリングレートを強制的に設定します。`0`の場合は`X68Sound_Start()`の引数から自動検出します。
+- **効果**:
+  - **96kHz**: 高品質な音質（2倍のサンプリング）、CPU負荷2倍
+  - **192kHz**: 超高品質な音質（4倍のサンプリング）、CPU負荷4倍
+  - 線形補間機能との相乗効果で、さらにエイリアシングノイズが軽減
+- **推奨設定**:
+  - 標準品質: `0` または `44100`
+  - 高品質: `96000` （現代のPCで推奨）
+  - 最高品質: `192000` （ハイスペックPC向け）
+- **注意事項**:
+  - 高サンプリングレートはCPU負荷とメモリ使用量が増加します
+  - オーディオインターフェースが対応している必要があります
+  - バッファサイズ設定の調整が必要な場合があります
+
+**設定例**:
+```batch
+REM 96kHzハイレゾ出力（推奨）
+set X68SOUND_OUTPUT_RATE=96000
+set X68SOUND_PCM_BUFFER=7
+set X68SOUND_LATE_TIME=200
+
+REM 192kHz超高品質出力（ハイスペックPC向け）
+set X68SOUND_OUTPUT_RATE=192000
+set X68SOUND_PCM_BUFFER=10
+set X68SOUND_LATE_TIME=300
+```
+
 ---
 
 ## 使用例
@@ -205,6 +237,33 @@ REM すべての音質向上機能を無効化して実機と同じ動作に
 set X68SOUND_LINEAR_INTERPOLATION=0
 set X68SOUND_VOLUME_SMOOTHING=0
 set X68SOUND_OPM_SINE_INTERP=0
+
+your_application.exe
+```
+
+### シナリオ6: 96kHzハイレゾ出力（推奨）
+```batch
+REM 現代のPCで高品質サウンドを楽しむ設定
+set X68SOUND_OUTPUT_RATE=96000
+set X68SOUND_LINEAR_INTERPOLATION=1
+set X68SOUND_VOLUME_SMOOTHING=1
+set X68SOUND_OPM_SINE_INTERP=1
+set X68SOUND_PCM_BUFFER=7
+set X68SOUND_LATE_TIME=200
+
+your_application.exe
+```
+
+### シナリオ7: 192kHz超高品質出力（ハイスペックPC向け）
+```batch
+REM 最高音質を追求する設定（CPU負荷4倍）
+set X68SOUND_OUTPUT_RATE=192000
+set X68SOUND_LINEAR_INTERPOLATION=1
+set X68SOUND_VOLUME_SMOOTHING=1
+set X68SOUND_OPM_SINE_INTERP=1
+set X68SOUND_PCM_BUFFER=10
+set X68SOUND_LATE_TIME=300
+set X68SOUND_BUF_MULTIPLIER=2
 
 your_application.exe
 ```
@@ -285,9 +344,10 @@ your_application.exe
 | `X68SOUND_LINEAR_INTERPOLATION` | 1 | 0/1 | PCM8/ADPCM線形補間 |
 | `X68SOUND_VOLUME_SMOOTHING` | 1 | 0/1 | PCM8ボリュームスムージング |
 | `X68SOUND_OPM_SINE_INTERP` | 1 | 0/1 | OPM正弦波線形補間 |
+| `X68SOUND_OUTPUT_RATE` | 0 | 0/22050/44100/48000/96000/192000 | 出力サンプリングレート |
 
 ---
 
 **作成日**: 2025-01-17
 **最終更新日**: 2025-11-17
-**バージョン**: 2.0
+**バージョン**: 2.1

@@ -5,6 +5,16 @@ Sharp X68000のサウンドハードウェア（OPM/ADPCM/PCM8）をエミュレ
 
 ## 最新の変更履歴
 
+### 2025/11/17 - v2.1 ハイレゾ対応アップデート
+
+#### 新機能
+* **ハイレゾ音源対応**: 96kHz/192kHz出力サンプリングレートをサポート
+  - 環境変数 `X68SOUND_OUTPUT_RATE` で設定可能
+  - 96kHz: CPU負荷2倍、高品質な音質
+  - 192kHz: CPU負荷4倍、超高品質な音質
+  - 線形補間機能との相乗効果でエイリアシングノイズをさらに軽減
+  - 詳細は [HIRES_AUDIO_FEASIBILITY_JP.md](HIRES_AUDIO_FEASIBILITY_JP.md) を参照
+
 ### 2025/11/17 - v2.0 音質向上アップデート
 
 #### 新機能
@@ -129,6 +139,20 @@ set X68SOUND_VOLUME_SMOOTHING=0
 set X68SOUND_OPM_SINE_INTERP=0
 ```
 
+#### ハイレゾ設定
+```batch
+REM 96kHzハイレゾ出力（推奨）
+set X68SOUND_OUTPUT_RATE=96000
+set X68SOUND_PCM_BUFFER=7
+set X68SOUND_LATE_TIME=200
+
+REM 192kHz超高品質出力（ハイスペックPC向け）
+set X68SOUND_OUTPUT_RATE=192000
+set X68SOUND_PCM_BUFFER=10
+set X68SOUND_LATE_TIME=300
+set X68SOUND_BUF_MULTIPLIER=2
+```
+
 ### ビルド方法
 
 #### Visual Studio 2022
@@ -164,7 +188,7 @@ build_VS2019_x64.bat
 - **PCM8**: 8チャンネルPCM再生（ソフトウェアミキシング）
 
 ### 対応フォーマット
-- **サンプルレート**: 22.05kHz / 44.1kHz / 48kHz (その他のレートも対応)
+- **サンプルレート**: 22.05kHz / 44.1kHz / 48kHz / 96kHz / 192kHz (その他のレートも対応)
 - **PCM形式**: 16bit PCM / 8bit PCM / ADPCM
 
 ### 音質向上機能（v2.0以降）
@@ -172,6 +196,7 @@ build_VS2019_x64.bat
 - **OPM線形補間**: FM音源の正弦波生成時のエイリアシングノイズを軽減（50～70%）
 - **ボリュームスムージング**: PCM8ボリューム変更時のクリックノイズを除去
 - **飽和演算**: PCM8の8チャンネル同時再生時のオーバーフロー対策
+- **ハイレゾ音源対応**: 96kHz/192kHz出力サンプリングレート（v2.1以降）
 
 ---
 
@@ -180,6 +205,7 @@ build_VS2019_x64.bat
 - [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) - 環境変数設定ガイド
 - [PCM8_QUALITY_IMPROVEMENTS_JP.md](PCM8_QUALITY_IMPROVEMENTS_JP.md) - PCM8音質向上の詳細解説
 - [OPM_QUALITY_IMPROVEMENTS_JP.md](OPM_QUALITY_IMPROVEMENTS_JP.md) - OPM音質向上の詳細解説
+- [HIRES_AUDIO_FEASIBILITY_JP.md](HIRES_AUDIO_FEASIBILITY_JP.md) - ハイレゾ音源対応の技術解説
 
 ---
 
@@ -245,4 +271,5 @@ set X68SOUND_OPM_SINE_INTERP=0
 - UTF-8変換、Visual Studio 2022対応
 - 環境変数サポート
 - 音質向上機能（PCM8/ADPCM線形補間、OPM線形補間、ボリュームスムージング）
+- ハイレゾ音源対応（96kHz/192kHz出力サンプリングレート）
 - コード品質改善（飽和演算、定数化、コメント整理） 
