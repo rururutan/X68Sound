@@ -18,15 +18,15 @@
 
 
 
-Opm	opm;  // OPMメインインスタンス
+Opm	opm;  // OPM main instance
 //MMTIME	mmt;
 
-// waveOut再生コールバック関数
-// オーディオバッファの再生完了時に呼ばれる
+// waveOut playback callback function
+// Called when audio buffer playback is complete
 void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 						  DWORD dwParam1, DWORD dwParam2) {
 	if (uMsg == WOM_DONE && thread_flag) {
-		timer_start_flag = 1;  // マルチメディアタイマーの処理を開始
+		timer_start_flag = 1;  // Start multimedia timer processing
 
 
 		playingblk = (playingblk+1) & (N_waveblk-1);
@@ -39,10 +39,10 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 		genptr -= playptr;
 		if (genptr <= Late_Samples) {
 			if (Late_Samples-Faster_Limit <= genptr) {
-				// バッファが遅れ気味
+				// Buffer is slightly behind
 				nSamples = Betw_Samples_Faster;
 			} else {
-				// バッファが進みすぎている
+				// Buffer is too far ahead
 //				nSamples = Betw_Samples_VerySlower;
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
@@ -51,10 +51,10 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 			}
 		} else {
 			if (genptr <= Late_Samples+Slower_Limit) {
-				// バッファが進み気味
+				// Buffer is slightly ahead
 				nSamples = Betw_Samples_Slower;
 			} else {
-				// バッファが進みすぎている
+				// Buffer is too far ahead
 //				nSamples = Betw_Samples_VerySlower;
 //				setPcmBufPtr = ((playingblk+1)&(N_waveblk-1)) * Blk_Samples;
 				unsigned int ptr = playptr + Late_Samples + Betw_Samples_Faster;
@@ -67,7 +67,7 @@ void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD dwInstance,
 	}
 }
 
-// waveOut専用スレッド関数
+// waveOut dedicated thread function
 DWORD WINAPI waveOutThread( LPVOID ) {
 	MSG Msg;
 
@@ -75,7 +75,7 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 
 	while (GetMessage( &Msg, NULL, 0, 0)) {
 		if (Msg.message == THREADMES_WAVEOUTDONE) {
-			// バッファをwaveOutに送信
+			// Send buffer to waveOut
 			waveOutWrite(hwo, lpwh+waveblk, sizeof(WAVEHDR));
 
 			++waveblk;
@@ -95,8 +95,8 @@ DWORD WINAPI waveOutThread( LPVOID ) {
 
 
 
-// マルチメディアタイマーコールバック関数
-// PCM生成とタイマー割り込み処理を実行
+// Multimedia timer callback function
+// Executes PCM generation and timer interrupt processing
 void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2) {
 		if (!timer_start_flag) return;
 
@@ -108,7 +108,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 
 		opm.PushRegs();
 
-		// PCM波形を生成
+		// Generate PCM waveform
 		if (WaveOutSamp == 44100 || WaveOutSamp == 48000) {
 			opm.pcmset22(nSamples);
 		} else {
@@ -116,7 +116,7 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 		}
 
 //		opm.timer();
-		opm.betwint();  // Between割り込み処理
+		opm.betwint();  // Between interrupt processing
 
 
 		opm.PopRegs();
@@ -144,10 +144,10 @@ void CALLBACK OpmTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw
 
 
 // ============================================================
-//   C API 関数エクスポート
+//   C API function exports
 // ============================================================
 
-// X68Sound初期化（waveOut出力モード）
+// X68Sound initialization (waveOut output mode)
 extern "C" int X68Sound_Start(int samprate, int opmflag, int adpcmflag,
 				  int betw, int pcmbuf, int late, double rev) {
 	return opm.Start(samprate, opmflag, adpcmflag, betw, pcmbuf, late, rev);
@@ -271,11 +271,11 @@ extern "C" void X68Sound_TimerA() {
 	opm.CsmKeyOn();
 }
 
-// DLLエントリポイント - 環境変数から設定を読み込む
+// DLL entry point - Load configuration from environment variables
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	switch (fdwReason) {
 		case DLL_PROCESS_ATTACH:
-			// DLLがロードされたときに環境変数を読み込む
+			// Load environment variables when DLL is loaded
 			LoadConfigFromEnvironment();
 
 			if (g_Config.enable_debug_log) {
@@ -291,7 +291,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 		case DLL_THREAD_ATTACH:
 		case DLL_THREAD_DETACH:
-			// スレッドごとの処理は不要
+			// No per-thread processing required
 			break;
 	}
 	return TRUE;

@@ -90,7 +90,7 @@ inline void Adpcm::Init() {
 	Pcm = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
-	PrevInpPcm = 0;		// 線形補間用
+	PrevInpPcm = 0;		// For linear interpolation
 	AdpcmRate = 15625*12;
 	RateCounter = 0;
 	N1Data = 0;
@@ -117,7 +117,7 @@ inline void Adpcm::Reset() {
 	Pcm = 0;
 	InpPcm = InpPcm_prev = OutPcm = 0;
 	OutInpPcm = OutInpPcm_prev = 0;
-	PrevInpPcm = 0;		// 線形補間用
+	PrevInpPcm = 0;		// For linear interpolation
 
 	N1Data = 0;
 	N1DataFlag = 0;
@@ -152,7 +152,7 @@ inline int Adpcm::DmaContinueSetNextMtcMar() {
 	*(unsigned int *)&DmaReg[0x0C] = *(unsigned int *)&DmaReg[0x1C];	// BAR -> MAR
 	DmaReg[0x29] = DmaReg[0x39];	// BFC -> MFC
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
+			DmaError(0x0D);	// Count error (destination address/counter)
 		return 1;
 	}
 	DmaReg[0x00] |= 0x40;		// BTC=1
@@ -184,7 +184,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	mem4 = MemRead(Bar++);
 	mem5 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5) == -1) {
-			DmaError(0x0B);		// バスエラー(ベースアドレス/ベースカウンタ)
+			DmaError(0x0B);		// Bus error (base address/counter)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -196,7 +196,7 @@ inline int Adpcm::DmaArrayChainSetNextMtcMar() {
 	DmaReg[0x0B] = mem5;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
+			DmaError(0x0D);	// Count error (destination address/counter)
 		return 1;
 	}
 	return 0;
@@ -223,7 +223,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	mem8 = MemRead(Bar++);
 	mem9 = MemRead(Bar++);
 	if ((mem0|mem1|mem2|mem3|mem4|mem5|mem6|mem7|mem8|mem9) == -1) {
-			DmaError(0x0B);		// バスエラー(ベースアドレス/ベースカウンタ)
+			DmaError(0x0B);		// Bus error (base address/counter)
 		return 1;
 	} 
 	*(unsigned char **)&DmaReg[0x1C] = bswapl(Bar);
@@ -239,7 +239,7 @@ inline int Adpcm::DmaLinkArrayChainSetNextMtcMar() {
 	DmaReg[0x1F] = mem9;
 
 	if ( (*(unsigned short *)&DmaReg[0x0A]) == 0 ) {	// MTC == 0 ?
-			DmaError(0x0D);	// カウントエラー(転送先アドレス/転送先カウンタ)
+			DmaError(0x0D);	// Count error (destination address/counter)
 		return 1;
 	}
 	return 0;
@@ -271,7 +271,7 @@ inline int	Adpcm::DmaGetByte() {
 		int mem;
 		mem = MemRead(Mar);
 		if (mem == -1) {
-			DmaError(0x09);	// バスエラー(転送先アドレス/転送先カウンタ)
+			DmaError(0x09);	// Bus error (destination address/counter)
 			return 0x80000000;
 		}
 		DmaLastValue = mem;
@@ -359,43 +359,43 @@ inline void	Adpcm::adpcm2pcm(unsigned char adpcm) {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm() {
-	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
+	if (AdpcmReg & 0x80) {		// ADPCM stop
 		return 0x80000000;
 	}
 
-	// 線形補間: 前回のサンプル値を保存
+	// Linear interpolation: Save previous sample value
 	PrevInpPcm = InpPcm;
 
 	RateCounter -= AdpcmRate;
 	int needNewSample = (RateCounter < 0);
 
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
+		if (N1DataFlag == 0) {		// Next ADPCM data is required
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA転送(1バイト)
+			N10Data = DmaGetByte();	// DMA transfer (1 byte)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm に値を代入
+			adpcm2pcm(N10Data & 0x0F);	// Assign value to InpPcm
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm に値を代入
+			adpcm2pcm(N1Data);			// Assign value to InpPcm
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12;
 	}
 
-	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	// Apply linear interpolation (only when new sample is acquired and enabled via environment variable)
 	if (g_Config.linear_interpolation && needNewSample) {
-		// frac = RateCounter / (15625*12) の割合で補間（16bit固定小数点）
+		// Interpolate at frac = RateCounter / (15625*12) ratio (16-bit fixed point)
 		int sampleInterval = 15625*12;
 		int frac = (RateCounter << 16) / sampleInterval;
 		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);
 	}
 
-	// HPFフィルター適用（マジックナンバーを定数化）
+	// Apply HPF filter (magic numbers replaced with constants)
 	OutPcm = ((InpPcm << HPF_SHIFT) - (InpPcm_prev << HPF_SHIFT) + HPF_COEFF_A1_22KHZ * OutPcm) >> HPF_SHIFT;
 	InpPcm_prev = InpPcm;
 
@@ -404,38 +404,38 @@ inline int Adpcm::GetPcm() {
 
 // -32768<<4 <= retval <= +32768<<4
 inline int Adpcm::GetPcm62() {
-	if (AdpcmReg & 0x80)		// ADPCM 停止中 {
+	if (AdpcmReg & 0x80) {		// ADPCM stop
 		return 0x80000000;
 	}
 
-	// 線形補間: 前回のサンプル値を保存
+	// Linear interpolation: Save previous sample value
 	PrevInpPcm = InpPcm;
 
 	RateCounter -= AdpcmRate;
 	int needNewSample = (RateCounter < 0);
 
 	while (RateCounter < 0) {
-		if (N1DataFlag == 0)		// 次のADPCMデータが必要になった場合 {
+		if (N1DataFlag == 0) {		// Next ADPCM data is required
 			int	N10Data;	// (N1Data << 4) | N0Data
-			N10Data = DmaGetByte();	// DMA転送(1バイト)
+			N10Data = DmaGetByte();	// DMA transfer (1 byte)
 			if (N10Data == 0x80000000) {
 				RateCounter = 0;
 				return 0x80000000;
 			}
-			adpcm2pcm(N10Data & 0x0F);	// InpPcm に値を代入
+			adpcm2pcm(N10Data & 0x0F);	// Assign value to InpPcm
 			N1Data = (N10Data >> 4) & 0x0F;
 			N1DataFlag = 1;
 		} else {
-			adpcm2pcm(N1Data);			// InpPcm に値を代入
+			adpcm2pcm(N1Data);			// Assign value to InpPcm
 			N1DataFlag = 0;
 		}
 		RateCounter += 15625*12*4;
 
 	}
 
-	// 線形補間を適用（新しいサンプルが取得された場合のみ、環境変数で有効化されている場合）
+	// Apply linear interpolation (only when new sample is acquired and enabled via environment variable)
 	if (g_Config.linear_interpolation && needNewSample) {
-		// frac = RateCounter / (15625*12*4) の割合で補間（16bit固定小数点）
+		// Interpolate at frac = RateCounter / (15625*12*4) ratio (16-bit fixed point)
 		int sampleInterval = 15625*12*4;
 		int frac = (RateCounter << 16) / sampleInterval;
 		InpPcm = PrevInpPcm + (((InpPcm - PrevInpPcm) * frac) >> 16);

@@ -523,7 +523,7 @@ inline void Op::Output0(int lfopitch, int lfolevel) {
 		LfoLevel = lfolevelame;
 	}
 
-	// 正弦波テーブルの線形補間（OPM音質向上）
+	// Linear interpolation of sine table (OPM audio quality improvement)
 	int phase_total = T + Out2Fb;
 	int sin_val;
 	if (g_Config.opm_sine_interpolation) {
@@ -566,7 +566,7 @@ inline void Op::Output(int lfopitch, int lfolevel) {
 		LfoLevel = lfolevelame;
 	}
 
-	// 正弦波テーブルの線形補間（OPM音質向上）
+	// Linear interpolation of sine table (OPM audio quality improvement)
 	int phase_total = T + inp;
 	int sin_val;
 	if (g_Config.opm_sine_interpolation) {
@@ -601,7 +601,7 @@ inline void Op::Output32(int lfopitch, int lfolevel) {
 			LfoLevel = lfolevelame;
 		}
 
-		// 正弦波テーブルの線形補間（OPM音質向上）
+		// Linear interpolation of sine table (OPM audio quality improvement)
 		int phase_total = T + inp;
 		int sin_val;
 		if (g_Config.opm_sine_interpolation) {
@@ -649,7 +649,7 @@ inline void Op::Output0_22(int lfopitch, int lfolevel) {
 		LfoLevel = lfolevelame;
 	}
 
-	// 正弦波テーブルの線形補間（OPM音質向上）
+	// Linear interpolation of sine table (OPM audio quality improvement)
 	int phase_total = T + Out2Fb;
 	int sin_val;
 	if (g_Config.opm_sine_interpolation) {
@@ -690,7 +690,7 @@ inline void Op::Output_22(int lfopitch, int lfolevel) {
 		LfoLevel = lfolevelame;
 	}
 
-	// 正弦波テーブルの線形補間（OPM音質向上）
+	// Linear interpolation of sine table (OPM audio quality improvement)
 	int phase_total = T + inp;
 	int sin_val;
 	if (g_Config.opm_sine_interpolation) {
@@ -725,7 +725,7 @@ inline void Op::Output32_22(int lfopitch, int lfolevel) {
 			LfoLevel = lfolevelame;
 		}
 
-		// 正弦波テーブルの線形補間（OPM音質向上）
+		// Linear interpolation of sine table (OPM audio quality improvement)
 		int phase_total = T + inp;
 		int sin_val;
 		if (g_Config.opm_sine_interpolation) {

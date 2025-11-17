@@ -155,8 +155,8 @@ inline void LoadConfigFromEnvironment() {
 
 int	Samprate = 44100;
 int	WaveOutSamp = 44100;
-int OpmWait = 240;	// 24.0us相当
-int	OpmRate = 62500;	// 実機のクロックは64
+int OpmWait = 240;	// Equivalent to 24.0us
+int	OpmRate = 62500;	// Actual hardware clock is 64
 
 int	STEPTBL[11*12*64];
 //int	STEPTBL3[11*12*64];
