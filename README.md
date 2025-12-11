@@ -1,9 +1,17 @@
 ﻿
 # X68Sound
 
-## 変更履歴
+m_puusan氏作の[X68Sound](http://mpuusan.web.fc2.com/x68sound/x68soundbody.htm)をパッチの纏めと修正を行ったレポジトリです。
+
+
+## Change History
+
+2019/11/16
+
+* KF,KC,DT2の音程に上限値を設定(TAPPY氏提供)
 
 2016/09/12
+
 * CSM音声合成モードの実装(GIMONS氏提供)
 
 2013/08/03
@@ -29,9 +37,21 @@
 2003/09/26
 
 * 22/44.1/48KHz以外の出力許す様に修正。
-* ROMEOパッチ(GORRY氏)/ROMEO-Athronパッチ(うさ氏)のコードをマージ
+* [ROMEOパッチ](https://gorry.haun.org/mx/) (GORRY氏)/[ROMEO-Athronパッチ](http://retropc.net/usalin/) (うさ氏)のコードをマージ
 
-## ライセンス
+
+## Build
+
+> cmake -S . -B build -A win32
+
+or 
+
+> cmake -S . -B build -A x64
+
+> cmake --build build --config Release
+
+
+## License
 
 以下のオリジナルのライセンスに従います。
 

@@ -12,3 +12,4 @@
 # Backup files
 *.*~
 *.bak
+build/
